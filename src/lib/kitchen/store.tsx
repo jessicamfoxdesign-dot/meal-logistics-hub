@@ -34,14 +34,18 @@ export function dayKey(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
+function parseKey(key: string): [number, number, number] {
+  const parts = key.split("-").map(Number);
+  return [parts[0] ?? 1970, parts[1] ?? 1, parts[2] ?? 1];
+}
+
 export function addDays(key: string, n: number) {
-  const [y, m, d] = key.split("-").map(Number);
-  const dt = new Date(y, m - 1, d + n);
-  return dayKey(dt);
+  const [y, m, d] = parseKey(key);
+  return dayKey(new Date(y, m - 1, d + n));
 }
 
 export function formatDay(key: string) {
-  const [y, m, d] = key.split("-").map(Number);
+  const [y, m, d] = parseKey(key);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
     weekday: "long",
     month: "short",
@@ -50,7 +54,7 @@ export function formatDay(key: string) {
 }
 
 export function shortDay(key: string) {
-  const [y, m, d] = key.split("-").map(Number);
+  const [y, m, d] = parseKey(key);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {
     weekday: "short",
     day: "numeric",
