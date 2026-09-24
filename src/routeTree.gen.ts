@@ -10,12 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EquipmentRouteImport } from './routes/equipment'
+import { Route as MealsRouteImport } from './routes/meals'
+import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as NeedsRouteImport } from './routes/needs'
 import { Route as PlanRouteImport } from './routes/plan'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipmentRoute = EquipmentRouteImport.update({
+  id: '/equipment',
+  path: '/equipment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MealsRoute = MealsRouteImport.update({
+  id: '/meals',
+  path: '/meals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsRoute = MissionsRouteImport.update({
+  id: '/missions',
+  path: '/missions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NeedsRoute = NeedsRouteImport.update({
@@ -31,30 +49,49 @@ const PlanRoute = PlanRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/equipment': typeof EquipmentRoute
+  '/meals': typeof MealsRoute
+  '/missions': typeof MissionsRoute
   '/needs': typeof NeedsRoute
   '/plan': typeof PlanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/equipment': typeof EquipmentRoute
+  '/meals': typeof MealsRoute
+  '/missions': typeof MissionsRoute
   '/needs': typeof NeedsRoute
   '/plan': typeof PlanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/equipment': typeof EquipmentRoute
+  '/meals': typeof MealsRoute
+  '/missions': typeof MissionsRoute
   '/needs': typeof NeedsRoute
   '/plan': typeof PlanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/needs' | '/plan'
+  fullPaths: '/' | '/equipment' | '/meals' | '/missions' | '/needs' | '/plan'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/needs' | '/plan'
-  id: '__root__' | '/' | '/needs' | '/plan'
+  to: '/' | '/equipment' | '/meals' | '/missions' | '/needs' | '/plan'
+  id:
+    | '__root__'
+    | '/'
+    | '/equipment'
+    | '/meals'
+    | '/missions'
+    | '/needs'
+    | '/plan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EquipmentRoute: typeof EquipmentRoute
+  MealsRoute: typeof MealsRoute
+  MissionsRoute: typeof MissionsRoute
   NeedsRoute: typeof NeedsRoute
   PlanRoute: typeof PlanRoute
 }
@@ -66,6 +103,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipment': {
+      id: '/equipment'
+      path: '/equipment'
+      fullPath: '/equipment'
+      preLoaderRoute: typeof EquipmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meals': {
+      id: '/meals'
+      path: '/meals'
+      fullPath: '/meals'
+      preLoaderRoute: typeof MealsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions': {
+      id: '/missions'
+      path: '/missions'
+      fullPath: '/missions'
+      preLoaderRoute: typeof MissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/needs': {
@@ -87,6 +145,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EquipmentRoute: EquipmentRoute,
+  MealsRoute: MealsRoute,
+  MissionsRoute: MissionsRoute,
   NeedsRoute: NeedsRoute,
   PlanRoute: PlanRoute,
 }
