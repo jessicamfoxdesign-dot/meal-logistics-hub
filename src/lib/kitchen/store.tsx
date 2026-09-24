@@ -100,17 +100,18 @@ function subscribe(cb: () => void) {
 }
 
 export function useKitchen() {
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     load();
+    setReady(true);
   }, []);
   const snapshot = useSyncExternalStore(
     subscribe,
     () => data,
     () => emptyData,
   );
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  return { data: snapshot, ready: hydrated && loaded };
+  console.log("useKitchen", ready, snapshot.meals.length);
+  return { data: snapshot, ready };
 }
 
 export function useToday() {
