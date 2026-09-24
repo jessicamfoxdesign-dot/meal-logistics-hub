@@ -110,7 +110,6 @@ export function useKitchen() {
     () => data,
     () => emptyData,
   );
-  console.log("useKitchen", ready, snapshot.meals.length);
   return { data: snapshot, ready };
 }
 
