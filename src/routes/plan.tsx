@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
@@ -9,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import {
   addDays,
   formatDay,
+  deleteEntry,
   patchEntry,
+  saveEntry,
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
@@ -131,7 +134,7 @@ function PlanPage() {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="size-10"
+                              className="size-11"
                               aria-label="Move a day earlier"
                               onClick={() =>
                                 patchEntry(entry.id, {
@@ -144,7 +147,7 @@ function PlanPage() {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="size-10"
+                              className="size-11"
                               aria-label="Move a day later"
                               onClick={() =>
                                 patchEntry(entry.id, {
@@ -156,10 +159,28 @@ function PlanPage() {
                             </Button>
                             <Button
                               variant="secondary"
-                              className="h-10"
+                              className="h-11"
                               onClick={() => setOpenId(entry.id)}
                             >
                               Open
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="size-11"
+                              aria-label={`Remove ${entry.title}`}
+                              onClick={() => {
+                                const removed = entry;
+                                deleteEntry(removed.id);
+                                toast(`Removed ${removed.title}`, {
+                                  action: {
+                                    label: "Undo",
+                                    onClick: () => saveEntry(removed),
+                                  },
+                                });
+                              }}
+                            >
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         </div>
