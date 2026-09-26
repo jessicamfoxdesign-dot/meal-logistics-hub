@@ -14,13 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      allowed_emails: {
+        Row: {
+          added_at: string
+          email: string
+        }
+        Insert: {
+          added_at?: string
+          email: string
+        }
+        Update: {
+          added_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
+      equipment: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meals: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      missions: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      needs: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_entries: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_allowed: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

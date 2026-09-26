@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790428835190,
+      "tag": "0000_shared_kitchen_data",
+      "breakpoints": true
+    }
+  ]
 }
