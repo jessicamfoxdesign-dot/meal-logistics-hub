@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, CircleAlert, HandHelping } from "lucide-react";
+import { CalendarDays, CircleAlert, HandHelping, Plus } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
+import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,6 +55,7 @@ function TodayPage() {
   const today = useToday();
   const tomorrow = addDays(today, 1);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const todayEntries = data.entries.filter((e) => e.date === today);
   const tomorrowEntries = data.entries.filter((e) => e.date === tomorrow);
