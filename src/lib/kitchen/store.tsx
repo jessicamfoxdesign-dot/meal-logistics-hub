@@ -163,8 +163,8 @@ export function parseBackup(text: string): KitchenData {
     if (!allHave(raw[key], fields))
       throw new Error(`This file doesn't look like a Kitchen Plan backup (problem with "${key}").`);
   }
-  const entriesOk = (raw.entries as Record<string, unknown>[]).every(
-    (e) => Array.isArray(e.items) && Array.isArray(e.tasks),
+  const entriesOk = (raw["entries"] as Record<string, unknown>[]).every(
+    (e) => Array.isArray(e["items"]) && Array.isArray(e["tasks"]),
   );
   if (!entriesOk) throw new Error("This backup's plan entries are incomplete.");
   return raw as unknown as KitchenData;
