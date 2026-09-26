@@ -105,13 +105,26 @@ function TodayPage() {
       title={formatDay(today)}
       subtitle="Everything that matters today, and anything today sets up for later."
       action={
-        <Button asChild variant="secondary" className="h-11">
-          <Link to="/plan">
-            <CalendarDays className="size-4" /> Plan
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button className="h-11" onClick={() => setAdding(true)}>
+            <Plus className="size-4" /> Add to today
+          </Button>
+          <Button asChild variant="secondary" className="h-11">
+            <Link to="/plan">
+              <CalendarDays className="size-4" /> Plan
+            </Link>
+          </Button>
+        </div>
       }
     >
+      {adding ? (
+        <AddToDayDialog
+          day={today}
+          open
+          onOpenChange={(v) => !v && setAdding(false)}
+          onAdded={setOpenId}
+        />
+      ) : null}
       {!ready ? (
         <EmptyNote>Loading your plan…</EmptyNote>
       ) : (
@@ -121,9 +134,9 @@ function TodayPage() {
             {todayEntries.length === 0 ? (
               <EmptyNote>
                 Nothing planned for today.{" "}
-                <Link to="/plan" className="underline">
+                <button type="button" className="min-h-11 underline" onClick={() => setAdding(true)}>
                   Add something
-                </Link>{" "}
+                </button>{" "}
                 if you'd like.
               </EmptyNote>
             ) : (
