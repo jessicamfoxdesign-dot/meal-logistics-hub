@@ -131,6 +131,51 @@ export function resetToSamples() {
   emit();
 }
 
+/* ---------- backup ---------- */
+
+export function exportJson() {
+  return JSON.stringify(data, null, 2);
+}
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+const allHave = (arr: unknown, keys: string[]) =>
+  Array.isArray(arr) &&
+  arr.every((x) => isObj(x) && keys.every((k) => typeof x[k] === "string"));
+
+/** Returns parsed data or throws an Error with a friendly message. Never touches stored data. */
+export function parseBackup(text: string): KitchenData {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    throw new Error("This file isn't a readable backup (not valid JSON).");
+  }
+  if (!isObj(raw)) throw new Error("This file doesn't look like a Kitchen Plan backup.");
+  const checks: [keyof KitchenData, string[]][] = [
+    ["meals", ["id", "name"]],
+    ["missions", ["id", "name"]],
+    ["equipment", ["id", "name"]],
+    ["entries", ["id", "date", "title"]],
+    ["needs", ["id", "text"]],
+  ];
+  for (const [key, fields] of checks) {
+    if (!allHave(raw[key], fields))
+      throw new Error(`This file doesn't look like a Kitchen Plan backup (problem with "${key}").`);
+  }
+  const entriesOk = (raw.entries as Record<string, unknown>[]).every(
+    (e) => Array.isArray(e.items) && Array.isArray(e.tasks),
+  );
+  if (!entriesOk) throw new Error("This backup's plan entries are incomplete.");
+  return raw as unknown as KitchenData;
+}
+
+export function restoreBackup(next: KitchenData) {
+  data = { ...emptyData, ...next };
+  persist();
+  emit();
+}
+
 /* ---------- mutations ---------- */
 
 export const saveMeal = (meal: Meal) =>
