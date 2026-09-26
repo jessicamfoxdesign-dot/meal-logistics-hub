@@ -5,6 +5,7 @@ import {
   ChefHat,
   ListChecks,
   Rocket,
+  Settings,
   Sun,
   Wrench,
 } from "lucide-react";
@@ -16,6 +17,7 @@ const NAV = [
   { to: "/missions", label: "Missions", icon: Rocket },
   { to: "/equipment", label: "Equipment", icon: Wrench },
   { to: "/needs", label: "Needs", icon: ListChecks },
+  { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export function Shell({
@@ -69,7 +71,7 @@ export function Shell({
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden">
-        <div className="grid grid-cols-6">
+        <div className="grid grid-cols-7">
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
