@@ -17,6 +17,15 @@ import {
 } from "@/lib/kitchen/store";
 import { PHASE_LABEL, type Phase, type PlanEntry } from "@/lib/kitchen/types";
 
+const PREFLIGHT_HORIZON_DAYS = 3;
+
+type TaskSection = "setup" | "prep" | "cook";
+const TASK_SECTIONS: { key: TaskSection; title: string }[] = [
+  { key: "setup", title: PHASE_LABEL.setup },
+  { key: "prep", title: PHASE_LABEL.prep },
+  { key: "cook", title: PHASE_LABEL.cook },
+];
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -49,6 +58,7 @@ function TodayPage() {
   const taskDay = (e: PlanEntry, t: PlanEntry["tasks"][number]) =>
     t.doDate ?? e.date;
 
+  // Every task whose effective day is today, regardless of phase.
   const todayTasks = data.entries.flatMap((e) =>
     e.skipped
       ? []
@@ -57,21 +67,31 @@ function TodayPage() {
           .map((t) => ({ entry: e, task: t })),
   );
 
-  const byPhase = (phase: Phase) =>
-    todayTasks.filter(
-      ({ entry, task }) => task.phase === phase && entry.date === today,
-    );
-
+  // Tasks belonging to other days' entries go to "Sets up a later day";
+  // all others are bucketed by phase. Any unknown phase falls into setup,
+  // so no task can drop out of view.
   const aheadTasks = todayTasks.filter(({ entry }) => entry.date !== today);
+  const sameDayTasks = todayTasks.filter(({ entry }) => entry.date === today);
+  const sectionOf = (phase: Phase): TaskSection =>
+    phase === "prep" ? "prep" : phase === "cook" ? "cook" : "setup";
+  const bySection = (section: TaskSection) =>
+    sameDayTasks.filter(({ task }) => sectionOf(task.phase) === section);
 
-  const attentionItems = data.entries
-    .filter((e) => !e.skipped && e.date >= today && e.date <= addDays(today, 7))
-    .flatMap((e) =>
-      e.items
-        .filter((i) => needsAttention(i.status) || i.status === "unset")
-        .map((i) => ({ entry: e, item: i })),
-    )
-    .filter(({ entry }) => entry.date <= tomorrow);
+  const attentionByDay = Array.from(
+    { length: PREFLIGHT_HORIZON_DAYS + 1 },
+    (_, i) => addDays(today, i),
+  )
+    .map((date) => ({
+      date,
+      rows: data.entries
+        .filter((e) => !e.skipped && e.date === date)
+        .flatMap((e) =>
+          e.items
+            .filter((i) => needsAttention(i.status) || i.status === "unset")
+            .map((i) => ({ entry: e, item: i })),
+        ),
+    }))
+    .filter((g) => g.rows.length > 0);
 
   const helpItems = data.equipment.filter((e) => e.helpNeeded);
 
@@ -153,47 +173,63 @@ function TodayPage() {
 
           <section className="space-y-3">
             <h2 className="text-xl">Preflight</h2>
-            {attentionItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Unchecked or missing items for the next {PREFLIGHT_HORIZON_DAYS} days.
+            </p>
+            {attentionByDay.length === 0 ? (
               <EmptyNote>Nothing waiting on a check right now.</EmptyNote>
             ) : (
-              <ul className="grid gap-2">
-                {attentionItems.map(({ entry, item }) => (
-                  <li
-                    key={item.id}
-                    className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 ${
-                      needsAttention(item.status)
-                        ? "border-attention-border bg-attention/40"
-                        : "border-border bg-card"
-                    }`}
-                  >
-                    <div>
-                      <p className="font-medium">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {entry.title} · {formatDay(entry.date)}
-                        {item.note ? ` · ${item.note}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={item.status} />
-                      <Button
-                        variant="ghost"
-                        className="h-10"
-                        onClick={() => setOpenId(entry.id)}
-                      >
-                        Check
-                      </Button>
-                    </div>
-                  </li>
+              <div className="space-y-4">
+                {attentionByDay.map(({ date, rows }) => (
+                  <div key={date} className="space-y-2">
+                    <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+                      {date === today
+                        ? "Today"
+                        : date === tomorrow
+                          ? "Tomorrow"
+                          : formatDay(date)}
+                    </h3>
+                    <ul className="grid gap-2">
+                      {rows.map(({ entry, item }) => (
+                        <li
+                          key={item.id}
+                          className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 ${
+                            needsAttention(item.status)
+                              ? "border-attention-border bg-attention/40"
+                              : "border-border bg-card"
+                          }`}
+                        >
+                          <div>
+                            <p className="font-medium">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {entry.title}
+                              {item.note ? ` · ${item.note}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <StatusBadge status={item.status} />
+                            <Button
+                              variant="ghost"
+                              className="h-11"
+                              onClick={() => setOpenId(entry.id)}
+                            >
+                              Check
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </section>
 
-          {(["prep", "cook"] as Phase[]).map((phase) => {
-            const rows = byPhase(phase);
+          {TASK_SECTIONS.map(({ key, title }) => {
+            const rows = bySection(key);
             return (
-              <section key={phase} className="space-y-3">
-                <h2 className="text-xl">{PHASE_LABEL[phase]}</h2>
+              <section key={key} className="space-y-3">
+                <h2 className="text-xl">{title}</h2>
                 {rows.length === 0 ? (
                   <EmptyNote>Nothing here today.</EmptyNote>
                 ) : (
