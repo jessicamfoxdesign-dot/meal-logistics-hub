@@ -49,15 +49,7 @@ function SettingsPage() {
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const doExport = () => {
-    const blob = new Blob([exportJson()], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `kitchen-compass-${dayKey(new Date())}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadJson(exportJson(), `kitchen-compass-${dayKey(new Date())}.json`);
     setMessage({ kind: "ok", text: "Backup downloaded." });
   };
 
@@ -77,14 +69,17 @@ function SettingsPage() {
   };
 
   return (
-    <Shell title="Settings" subtitle="Keep a copy of your kitchen data somewhere safe.">
+    <Shell title="Settings" subtitle="Account, sharing and backups.">
       <div className="space-y-6">
+        <AccountSection />
+
+        <LocalCopySection />
+
         <section className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-xl">Backup</h2>
           <p className="max-w-prose text-sm text-muted-foreground">
-            Everything is stored only in this browser. Safari may clear it after a week
-            without a visit, so export a backup now and then — or add this app to your
-            home screen, which keeps it from being cleared.
+            Your kitchen plan is saved online and shared across your devices. A backup file is
+            extra peace of mind.
           </p>
           <p className="text-sm text-muted-foreground">
             Currently: {data.meals.length} meals · {data.missions.length} missions ·{" "}
@@ -120,10 +115,13 @@ function SettingsPage() {
           ) : null}
         </section>
 
+        <SharingSection />
+
         <section className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-xl">Start over</h2>
           <p className="max-w-prose text-sm text-muted-foreground">
-            Replace everything with the original sample meals, missions and equipment.
+            Replace everything — for everyone with access — with the original sample meals,
+            missions and equipment.
           </p>
           <Button variant="outline" className="h-11" onClick={() => setConfirmReset(true)}>
             <RotateCcw className="size-4" /> Reset to samples
