@@ -3,28 +3,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
+import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   addDays,
   formatDay,
   patchEntry,
-  saveEntry,
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
-import {
-  entryFromMeal,
-  entryFromMission,
-  simpleEntry,
-} from "@/lib/kitchen/create";
 
 export const Route = createFileRoute("/plan")({
   head: () => ({
@@ -180,94 +168,27 @@ function PlanPage() {
                   })}
                 </ul>
 
-                <Dialog
-                  open={addDay === day}
-                  onOpenChange={(v) => setAddDay(v ? day : null)}
+                <Button
+                  variant="ghost"
+                  className="mt-3 h-11 w-full"
+                  onClick={() => setAddDay(day)}
                 >
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" className="mt-3 h-11 w-full">
-                      <Plus className="size-4" /> Add to this day
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="text-left">
-                        Add to {formatDay(day)}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-5">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Meals</p>
-                        <div className="grid gap-2">
-                          {data.meals
-                            .filter((m) => !m.archived)
-                            .map((meal) => (
-                              <Button
-                                key={meal.id}
-                                variant="outline"
-                                className="h-12 justify-start"
-                                onClick={() => {
-                                  saveEntry(entryFromMeal(meal, day));
-                                  setAddDay(null);
-                                }}
-                              >
-                                {meal.name}
-                              </Button>
-                            ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Missions</p>
-                        <div className="grid gap-2">
-                          {data.missions
-                            .filter((m) => !m.archived)
-                            .map((mission) => (
-                              <Button
-                                key={mission.id}
-                                variant="outline"
-                                className="h-12 justify-start"
-                                onClick={() => {
-                                  saveEntry(entryFromMission(mission, day));
-                                  setAddDay(null);
-                                }}
-                              >
-                                {mission.name}
-                              </Button>
-                            ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Other</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(
-                            [
-                              ["leftovers", "Leftovers"],
-                              ["takeout", "Takeout"],
-                              ["open", "Open / unplanned"],
-                            ] as const
-                          ).map(([kind, label]) => (
-                            <Button
-                              key={kind}
-                              variant="secondary"
-                              className="h-11"
-                              onClick={() => {
-                                saveEntry(simpleEntry(kind, label, day));
-                                setAddDay(null);
-                              }}
-                            >
-                              {label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                  <Plus className="size-4" /> Add to this day
+                </Button>
               </section>
             );
           })}
         </div>
       )}
+
+      {addDay ? (
+        <AddToDayDialog
+          day={addDay}
+          open
+          onOpenChange={(v) => !v && setAddDay(null)}
+          onAdded={setOpenId}
+        />
+      ) : null}
 
       <EntryDialog
         entry={openEntry}
