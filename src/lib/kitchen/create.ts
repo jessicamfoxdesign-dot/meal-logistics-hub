@@ -1,5 +1,17 @@
-import { uid } from "./store";
-import type { EntryKind, Meal, Mission, PlanEntry } from "./types";
+import { addDays, uid } from "./store";
+import type { EntryKind, Meal, Mission, Phase, PlanEntry, PlanTask, TemplateStep } from "./types";
+
+/** Turn template steps into plan tasks, placing each on (entry date - daysAhead). */
+export function tasksFromSteps(steps: TemplateStep[], phase: Phase, date: string): PlanTask[] {
+  return steps.map((s) => {
+    const t: PlanTask = { id: uid(), text: s.text, phase, done: false, notes: "" };
+    if (s.keeps?.trim()) t.keeps = s.keeps.trim();
+    if (s.daysAhead > 0) t.doDate = addDays(date, -s.daysAhead);
+    return t;
+  });
+}
+
+export const newStep = (text = ""): TemplateStep => ({ id: uid(), text, daysAhead: 0, keeps: "" });
 
 export function entryFromMeal(meal: Meal, date: string): PlanEntry {
   return {
@@ -29,20 +41,8 @@ export function entryFromMeal(meal: Meal, date: string): PlanEntry {
       })),
     ],
     tasks: [
-      ...meal.prep.map((t) => ({
-        id: uid(),
-        text: t,
-        phase: "prep" as const,
-        done: false,
-        notes: "",
-      })),
-      ...meal.cook.map((t) => ({
-        id: uid(),
-        text: t,
-        phase: "cook" as const,
-        done: false,
-        notes: "",
-      })),
+      ...tasksFromSteps(meal.prep, "prep", date),
+      ...tasksFromSteps(meal.cook, "cook", date),
     ],
   };
 }
@@ -73,27 +73,9 @@ export function entryFromMission(mission: Mission, date: string): PlanEntry {
       })),
     ],
     tasks: [
-      ...mission.setup.map((t) => ({
-        id: uid(),
-        text: t,
-        phase: "setup" as const,
-        done: false,
-        notes: "",
-      })),
-      ...mission.prep.map((t) => ({
-        id: uid(),
-        text: t,
-        phase: "prep" as const,
-        done: false,
-        notes: "",
-      })),
-      ...mission.finish.map((t) => ({
-        id: uid(),
-        text: t,
-        phase: "cook" as const,
-        done: false,
-        notes: "",
-      })),
+      ...tasksFromSteps(mission.setup, "setup", date),
+      ...tasksFromSteps(mission.prep, "prep", date),
+      ...tasksFromSteps(mission.finish, "cook", date),
     ],
   };
 }
