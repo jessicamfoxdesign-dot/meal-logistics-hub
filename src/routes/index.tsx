@@ -375,7 +375,7 @@ function TaskRow({
       <div className="flex gap-2">
         <Button
           variant="outline"
-          className="h-10"
+          className="h-11"
           onClick={() =>
             patchTask(entryId, task.id, {
               doDate: addDays(task.doDate ?? baseDate, 1),
@@ -384,7 +384,7 @@ function TaskRow({
         >
           Defer
         </Button>
-        <Button variant="ghost" className="h-10" onClick={onOpen}>
+        <Button variant="ghost" className="h-11" onClick={onOpen}>
           Details
         </Button>
       </div>
