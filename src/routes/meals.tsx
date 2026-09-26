@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
-import { EmptyNote, ListEditor } from "@/components/kitchen/bits";
+import { EmptyNote, ListEditor, StepChain, StepEditor } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,13 +82,17 @@ function MealsPage() {
               ) : null}
               <dl className="mt-3 grid gap-1 text-sm text-muted-foreground">
                 <div>{meal.items.length} things to verify</div>
-                <div>{meal.prep.length} prep tasks</div>
-                <div>{meal.cook.length} cook / finish tasks</div>
                 {meal.equipment.length > 0 ? (
                   <div>Equipment: {meal.equipment.join(", ")}</div>
                 ) : null}
                 {meal.planB ? <div>Plan B: {meal.planB}</div> : null}
               </dl>
+              <StepChain
+                groups={[
+                  { label: "Prep", steps: meal.prep },
+                  { label: "Cook / finish", steps: meal.cook },
+                ]}
+              />
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
                   variant="secondary"
@@ -106,6 +110,8 @@ function MealsPage() {
                       id: uid(),
                       name: `${meal.name} (copy)`,
                       items: meal.items.map((i) => ({ ...i, id: uid() })),
+                      prep: meal.prep.map((s) => ({ ...s, id: uid() })),
+                      cook: meal.cook.map((s) => ({ ...s, id: uid() })),
                     })
                   }
                 >
@@ -206,14 +212,14 @@ function MealEditor({
             values={draft.equipment}
             onChange={(equipment) => set({ equipment })}
           />
-          <ListEditor
+          <StepEditor
             label="Prep / do ahead"
-            values={draft.prep}
+            steps={draft.prep}
             onChange={(prep) => set({ prep })}
           />
-          <ListEditor
+          <StepEditor
             label="Cook / finish"
-            values={draft.cook}
+            steps={draft.cook}
             onChange={(cook) => set({ cook })}
           />
 

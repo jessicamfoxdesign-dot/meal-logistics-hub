@@ -1,6 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { buildSeed } from "./seed";
+import { normalizeData } from "./normalize";
 import type {
   Equipment,
   KitchenData,
@@ -140,7 +141,7 @@ async function fetchServer(): Promise<KitchenData> {
     if (r.error) throw new Error(r.error.message);
     next[COLLECTIONS[i]!] = (r.data ?? []).map((row) => row.data);
   });
-  return next as unknown as KitchenData;
+  return normalizeData(next as unknown as KitchenData);
 }
 
 let started = false;
@@ -391,7 +392,7 @@ export function parseBackup(text: string): KitchenData {
     (e) => Array.isArray(e["items"]) && Array.isArray(e["tasks"]),
   );
   if (!entriesOk) throw new Error("This backup's plan entries are incomplete.");
-  return raw as unknown as KitchenData;
+  return normalizeData(raw as unknown as KitchenData);
 }
 
 export function restoreBackup(next: KitchenData) {

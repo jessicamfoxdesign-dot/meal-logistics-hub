@@ -28,12 +28,23 @@ import {
 } from "@/lib/kitchen/store";
 import {
   PHASE_LABEL,
+  daysAheadLabel,
   type Phase,
   type PlanEntry,
 } from "@/lib/kitchen/types";
 import { ListEditor, StatusChips, needsAttention } from "./bits";
 
 const PHASES: Phase[] = ["setup", "prep", "cook"];
+
+function relLabel(day: string, base: string) {
+  const [y1, m1, d1] = day.split("-").map(Number);
+  const [y2, m2, d2] = base.split("-").map(Number);
+  const diff = Math.round(
+    (Date.UTC(y2!, m2! - 1, d2!) - Date.UTC(y1!, m1! - 1, d1!)) / 86400000,
+  );
+  if (diff < 0) return diff === -1 ? "1 day after" : `${-diff} days after`;
+  return daysAheadLabel(diff);
+}
 
 export function EntryDialog({
   entry,
@@ -242,11 +253,18 @@ export function EntryDialog({
               <ul className="space-y-2">
                 {entry.tasks
                   .filter((t) => t.phase === phase)
-                  .map((task) => (
+                  .map((t, i) => ({ t, i, day: t.doDate ?? entry.date }))
+                  .sort((a, b) => a.day.localeCompare(b.day) || a.i - b.i)
+                  .map(({ t: task, day }, idx, arr) => (
                     <li
                       key={task.id}
                       className="rounded-xl border border-border bg-card p-3"
                     >
+                      {idx === 0 || arr[idx - 1]!.day !== day ? (
+                        <p className="-mt-1 mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                          {relLabel(day, entry.date)} · {formatDay(day)}
+                        </p>
+                      ) : null}
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={task.done}
@@ -275,13 +293,15 @@ export function EntryDialog({
                           <X className="size-4" />
                         </Button>
                       </div>
+                      {task.keeps ? (
+                        <p className="pl-9 text-xs text-muted-foreground italic">
+                          {task.keeps}
+                        </p>
+                      ) : null}
                       <div className="mt-2 flex flex-wrap items-center gap-2 pl-9">
-                        <span className="text-xs text-muted-foreground">
-                          Do on {formatDay(task.doDate ?? entry.date)}
-                        </span>
                         <Button
                           variant="outline"
-                          className="h-9 text-xs"
+                          className="h-11 text-xs"
                           onClick={() =>
                             patchTask(entry.id, task.id, {
                               doDate: addDays(task.doDate ?? entry.date, -1),
@@ -292,7 +312,7 @@ export function EntryDialog({
                         </Button>
                         <Button
                           variant="outline"
-                          className="h-9 text-xs"
+                          className="h-11 text-xs"
                           onClick={() =>
                             patchTask(entry.id, task.id, {
                               doDate: addDays(task.doDate ?? entry.date, 1),

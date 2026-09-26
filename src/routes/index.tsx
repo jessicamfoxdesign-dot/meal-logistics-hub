@@ -6,8 +6,11 @@ import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   addDays,
+  dayKey,
   formatDay,
   patchEntry,
   patchTask,
@@ -370,24 +373,90 @@ function TaskRow({
         <p className={task.done ? "text-muted-foreground line-through" : ""}>
           {task.text}
         </p>
-        <p className="text-xs text-muted-foreground">{entryTitle}</p>
+        <p className="text-xs text-muted-foreground">
+          {entryTitle}
+          {task.keeps ? <span className="italic"> · {task.keeps}</span> : null}
+        </p>
       </div>
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="h-11"
-          onClick={() =>
-            patchTask(entryId, task.id, {
-              doDate: addDays(task.doDate ?? baseDate, 1),
-            })
-          }
-        >
-          Defer
-        </Button>
+        <DeferButton
+          current={task.doDate ?? baseDate}
+          onPick={(doDate) => patchTask(entryId, task.id, { doDate })}
+        />
         <Button variant="ghost" className="h-11" onClick={onOpen}>
           Details
         </Button>
       </div>
     </li>
+  );
+}
+
+function DeferButton({
+  current,
+  onPick,
+}: {
+  current: string;
+  onPick: (date: string) => void;
+}) {
+  const today = useToday();
+  const [open, setOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
+  // Defer counts from today, or from the task's current day if that's later.
+  const from = current > today ? current : today;
+  const pick = (d: string) => {
+    onPick(d);
+    setOpen(false);
+    setPicking(false);
+  };
+  const quick: [string, number][] = [
+    ["Tomorrow", 1],
+    ["In 2 days", 2],
+    ["In 3 days", 3],
+    ["Next week", 7],
+  ];
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) setPicking(false);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="h-11">
+          Defer
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-auto p-2">
+        {picking ? (
+          <Calendar
+            mode="single"
+            selected={undefined}
+            disabled={(d) => dayKey(d) <= today}
+            onSelect={(d) => d && pick(dayKey(d))}
+          />
+        ) : (
+          <div className="grid min-w-44 gap-1">
+            {quick.map(([label, n]) => (
+              <Button
+                key={label}
+                variant="ghost"
+                className="h-11 justify-start"
+                onClick={() => pick(addDays(from, n))}
+              >
+                {label}
+              </Button>
+            ))}
+            <Button
+              variant="ghost"
+              className="h-11 justify-start"
+              onClick={() => setPicking(true)}
+            >
+              Pick a date…
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

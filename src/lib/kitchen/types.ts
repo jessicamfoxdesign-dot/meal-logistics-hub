@@ -34,6 +34,23 @@ export interface TemplateItem {
   kind: ItemKind;
 }
 
+export interface TemplateStep {
+  id: string;
+  text: string;
+  /** 0 = day of, 1 = the day before, 7 = a week before */
+  daysAhead: number;
+  /** Free text, e.g. "keeps a week" */
+  keeps?: string;
+}
+
+export const DAYS_AHEAD_OPTIONS = [0, 1, 2, 3, 4, 5, 7];
+
+export function daysAheadLabel(n: number) {
+  if (n <= 0) return "Day of";
+  if (n === 7) return "A week before";
+  return n === 1 ? "1 day before" : `${n} days before`;
+}
+
 export interface Meal {
   id: string;
   name: string;
@@ -42,8 +59,8 @@ export interface Meal {
   archived: boolean;
   items: TemplateItem[];
   equipment: string[];
-  prep: string[];
-  cook: string[];
+  prep: TemplateStep[];
+  cook: TemplateStep[];
 }
 
 export interface Mission {
@@ -53,9 +70,9 @@ export interface Mission {
   archived: boolean;
   items: TemplateItem[];
   equipment: string[];
-  setup: string[];
-  prep: string[];
-  finish: string[];
+  setup: TemplateStep[];
+  prep: TemplateStep[];
+  finish: TemplateStep[];
 }
 
 export type EquipmentCategory = "everyday" | "staged" | "stored";
@@ -91,6 +108,8 @@ export interface PlanTask {
   phase: Phase;
   done: boolean;
   notes: string;
+  /** Copied from the template step, e.g. "keeps a week". */
+  keeps?: string;
   /** If set, the task shows up on this day instead of the entry's day. */
   doDate?: string;
 }

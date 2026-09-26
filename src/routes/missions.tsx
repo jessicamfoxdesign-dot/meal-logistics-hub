@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
-import { EmptyNote, ListEditor } from "@/components/kitchen/bits";
+import { EmptyNote, ListEditor, StepChain, StepEditor } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,13 +98,17 @@ function MissionsPage() {
                   </p>
                 ) : null}
                 <dl className="mt-3 grid gap-1 text-sm text-muted-foreground">
-                  <div>{mission.setup.length} setup-ahead tasks</div>
-                  <div>{mission.prep.length} prep tasks</div>
-                  <div>{mission.finish.length} finish tasks</div>
                   {mission.equipment.length > 0 ? (
                     <div>Equipment: {mission.equipment.join(", ")}</div>
                   ) : null}
                 </dl>
+                <StepChain
+                  groups={[
+                    { label: "Setup", steps: mission.setup },
+                    { label: "Prep", steps: mission.prep },
+                    { label: "Finish", steps: mission.finish },
+                  ]}
+                />
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button
                     variant="secondary"
@@ -122,6 +126,9 @@ function MissionsPage() {
                         id: uid(),
                         name: `${mission.name} (copy)`,
                         items: mission.items.map((i) => ({ ...i, id: uid() })),
+                        setup: mission.setup.map((s) => ({ ...s, id: uid() })),
+                        prep: mission.prep.map((s) => ({ ...s, id: uid() })),
+                        finish: mission.finish.map((s) => ({ ...s, id: uid() })),
                       })
                     }
                   >
@@ -224,19 +231,19 @@ function MissionEditor({
             values={draft.equipment}
             onChange={(equipment) => set({ equipment })}
           />
-          <ListEditor
+          <StepEditor
             label="Setup ahead (retrieve, clean, check)"
-            values={draft.setup}
+            steps={draft.setup}
             onChange={(setup) => set({ setup })}
           />
-          <ListEditor
+          <StepEditor
             label="Prep"
-            values={draft.prep}
+            steps={draft.prep}
             onChange={(prep) => set({ prep })}
           />
-          <ListEditor
+          <StepEditor
             label="Finish"
-            values={draft.finish}
+            steps={draft.finish}
             onChange={(finish) => set({ finish })}
           />
         </div>
