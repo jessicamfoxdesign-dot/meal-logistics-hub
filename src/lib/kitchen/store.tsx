@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { buildSeed } from "./seed";
 import type {
   Equipment,
@@ -9,7 +10,24 @@ import type {
   PlanEntry,
 } from "./types";
 
-const KEY = "kitchen-plan-v1";
+/**
+ * Server-backed store. The backend is authoritative; localStorage holds only a
+ * read cache (CACHE_KEY). The old pre-backend data under LEGACY_KEY is never
+ * written or deleted by this module.
+ */
+const CACHE_KEY = "kitchen-plan-cache-v2";
+export const LEGACY_KEY = "kitchen-plan-v1";
+const LEGACY_STATUS_KEY = "kitchen-plan-v1-status"; // "uploaded" | "dismissed"
+
+type Collection = keyof KitchenData;
+const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs"> = {
+  meals: "meals",
+  missions: "missions",
+  equipment: "equipment",
+  entries: "plan_entries",
+  needs: "needs",
+};
+const COLLECTIONS = Object.keys(TABLE) as Collection[];
 
 const emptyData: KitchenData = {
   meals: [],
@@ -19,13 +37,42 @@ const emptyData: KitchenData = {
   needs: [],
 };
 
+export interface SyncState {
+  /** true once cache or server data is available */
+  ready: boolean;
+  /** true once the server has answered at least once */
+  serverLoaded: boolean;
+  loadError: string | null;
+  saving: boolean;
+  /** number of changes that failed to save and are waiting */
+  unsaved: number;
+  saveError: string | null;
+}
+
 let data: KitchenData = emptyData;
-let loaded = false;
+let sync: SyncState = {
+  ready: false,
+  serverLoaded: false,
+  loadError: null,
+  saving: false,
+  unsaved: 0,
+  saveError: null,
+};
 const listeners = new Set<() => void>();
 
 function emit() {
   listeners.forEach((l) => l());
 }
+function setSync(patch: Partial<SyncState>) {
+  sync = { ...sync, ...patch };
+  emit();
+}
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
+/* ---------- dates ---------- */
 
 export function dayKey(d: Date) {
   const y = d.getFullYear();
@@ -61,64 +108,243 @@ export function shortDay(key: string) {
   });
 }
 
-function load() {
-  if (loaded || typeof window === "undefined") return;
-  loaded = true;
+/* ---------- cache ---------- */
+
+function writeCache() {
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) {
-      data = { ...emptyData, ...(JSON.parse(raw) as KitchenData) };
-    } else {
-      const today = dayKey(new Date());
-      data = buildSeed(today, addDays(today, 1));
-      persist();
-    }
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(data));
   } catch {
-    const today = dayKey(new Date());
-    data = buildSeed(today, addDays(today, 1));
+    /* cache only */
   }
-  emit();
 }
 
-function persist() {
+function readCache(): KitchenData | null {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(data));
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    return raw ? parseBackup(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+/* ---------- server load ---------- */
+
+async function fetchServer(): Promise<KitchenData> {
+  const results = await Promise.all(
+    COLLECTIONS.map((c) =>
+      supabase.from(TABLE[c]).select("id,data").order("seq", { ascending: true }),
+    ),
+  );
+  const next = { ...emptyData } as Record<Collection, unknown[]>;
+  results.forEach((r, i) => {
+    if (r.error) throw new Error(r.error.message);
+    next[COLLECTIONS[i]!] = (r.data ?? []).map((row) => row.data);
+  });
+  return next as unknown as KitchenData;
+}
+
+let started = false;
+
+/** Call once the signed-in user is confirmed to have access. */
+export async function startSync() {
+  if (started) return;
+  started = true;
+  const cached = readCache();
+  if (cached) {
+    data = cached;
+    setSync({ ready: true });
+  }
+  await refreshFromServer();
+}
+
+export async function refreshFromServer() {
+  // Never overwrite local state while edits are still in flight or unsaved.
+  if (queue.length > 0 || running) return;
+  try {
+    const next = await fetchServer();
+    if (queue.length > 0 || running) return;
+    data = next;
+    writeCache();
+    setSync({ ready: true, serverLoaded: true, loadError: null });
+  } catch (err) {
+    setSync({
+      loadError: err instanceof Error ? err.message : "Couldn't reach the server.",
+    });
+  }
+}
+
+export function stopSync() {
+  started = false;
+  data = emptyData;
+  queue.length = 0;
+  sync = {
+    ready: false,
+    serverLoaded: false,
+    loadError: null,
+    saving: false,
+    unsaved: 0,
+    saveError: null,
+  };
+  try {
+    window.localStorage.removeItem(CACHE_KEY);
   } catch {
     /* ignore */
   }
-}
-
-export function update(fn: (d: KitchenData) => KitchenData) {
-  data = fn(data);
-  persist();
   emit();
 }
 
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  return () => listeners.delete(cb);
+export function isServerEmpty() {
+  return COLLECTIONS.every((c) => data[c].length === 0);
 }
 
+/* ---------- write queue ---------- */
+
+type Op = () => Promise<void>;
+const queue: Op[] = [];
+let running = false;
+
+function enqueue(op: Op) {
+  queue.push(op);
+  if (sync.saveError) {
+    setSync({ unsaved: queue.length });
+    return; // wait for retry so order is preserved
+  }
+  void pump();
+}
+
+async function pump() {
+  if (running) return;
+  running = true;
+  setSync({ saving: true });
+  while (queue.length > 0) {
+    const op = queue[0]!;
+    try {
+      await op();
+      queue.shift();
+    } catch (err) {
+      running = false;
+      setSync({
+        saving: false,
+        unsaved: queue.length,
+        saveError: err instanceof Error ? err.message : "Save failed",
+      });
+      return;
+    }
+  }
+  running = false;
+  setSync({ saving: false, unsaved: 0, saveError: null });
+}
+
+export function retrySaves() {
+  setSync({ saveError: null });
+  void pump();
+}
+
+export function hasUnsavedChanges() {
+  return queue.length > 0;
+}
+
+const check = (r: { error: { message: string } | null }) => {
+  if (r.error) throw new Error(r.error.message);
+};
+
+function upsertRows(c: Collection, rows: { id: string }[]) {
+  if (rows.length === 0) return Promise.resolve();
+  return supabase
+    .from(TABLE[c])
+    .upsert(
+      rows.map((r) => ({
+        id: r.id,
+        data: JSON.parse(JSON.stringify(r)),
+        updated_at: new Date().toISOString(),
+      })),
+    )
+    .then(check);
+}
+
+function deleteRows(c: Collection, ids: string[]) {
+  if (ids.length === 0) return Promise.resolve();
+  return supabase.from(TABLE[c]).delete().in("id", ids).then(check);
+}
+
+/**
+ * Apply a change locally (instantly) and send only the rows that changed.
+ * Mutations create new objects for changed rows, so identity comparison is enough.
+ */
+export function update(fn: (d: KitchenData) => KitchenData) {
+  const prev = data;
+  const next = fn(prev);
+  data = next;
+  writeCache();
+  emit();
+  for (const c of COLLECTIONS) {
+    if (prev[c] === next[c]) continue;
+    const before = new Map<string, unknown>(prev[c].map((x) => [x.id, x]));
+    const changed = (next[c] as { id: string }[]).filter(
+      (x) => before.get(x.id) !== x,
+    );
+    const keep = new Set(next[c].map((x) => x.id));
+    const removed = prev[c].map((x) => x.id).filter((id) => !keep.has(id));
+    enqueue(async () => {
+      await upsertRows(c, changed);
+      await deleteRows(c, removed);
+    });
+  }
+}
+
+/**
+ * Replace the whole shared dataset (import, reset, first upload).
+ * Writes the new rows first, then removes rows not in the new set, so a
+ * failure part-way never leaves the dataset emptier than before.
+ */
+export function replaceAll(next: KitchenData) {
+  data = { ...emptyData, ...next };
+  writeCache();
+  emit();
+  const snapshot = data;
+  enqueue(async () => {
+    for (const c of COLLECTIONS) {
+      await upsertRows(c, snapshot[c]);
+    }
+    for (const c of COLLECTIONS) {
+      const keep = snapshot[c].map((x) => x.id);
+      let q = supabase.from(TABLE[c]).delete();
+      q =
+        keep.length > 0
+          ? q.not("id", "in", `(${keep.map((id) => `"${id.replace(/"/g, "")}"`).join(",")})`)
+          : q.neq("id", "");
+      check(await q);
+    }
+  });
+}
+
+/* ---------- hooks ---------- */
+
 export function useKitchen() {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    load();
-    setReady(true);
-  }, []);
   const snapshot = useSyncExternalStore(
     subscribe,
     () => data,
     () => emptyData,
   );
-  return { data: snapshot, ready };
+  const s = useSyncExternalStore(
+    subscribe,
+    () => sync,
+    () => sync,
+  );
+  return { data: snapshot, ready: s.ready };
+}
+
+export function useSyncState() {
+  return useSyncExternalStore(
+    subscribe,
+    () => sync,
+    () => sync,
+  );
 }
 
 export function useToday() {
-  const [today, setToday] = useState(() => dayKey(new Date()));
-  useEffect(() => {
-    setToday(dayKey(new Date()));
-  }, []);
-  return today;
+  // Client-only render (behind the sign-in gate), so reading the date is safe.
+  return dayKey(new Date());
 }
 
 export const uid = () =>
@@ -126,9 +352,7 @@ export const uid = () =>
 
 export function resetToSamples() {
   const today = dayKey(new Date());
-  data = buildSeed(today, addDays(today, 1));
-  persist();
-  emit();
+  replaceAll(buildSeed(today, addDays(today, 1)));
 }
 
 /* ---------- backup ---------- */
@@ -171,9 +395,61 @@ export function parseBackup(text: string): KitchenData {
 }
 
 export function restoreBackup(next: KitchenData) {
-  data = { ...emptyData, ...next };
-  persist();
-  emit();
+  replaceAll(next);
+}
+
+/* ---------- legacy (pre-backend) device data ---------- */
+
+export interface LegacyInfo {
+  data: KitchenData | null;
+  raw: string | null;
+  status: string | null;
+  error: string | null;
+}
+
+export function readLegacy(): LegacyInfo {
+  try {
+    const raw = window.localStorage.getItem(LEGACY_KEY);
+    const status = window.localStorage.getItem(LEGACY_STATUS_KEY);
+    if (!raw) return { data: null, raw: null, status, error: null };
+    try {
+      return { data: parseBackup(raw), raw, status, error: null };
+    } catch (e) {
+      return { data: null, raw, status, error: e instanceof Error ? e.message : "Unreadable" };
+    }
+  } catch {
+    return { data: null, raw: null, status: null, error: null };
+  }
+}
+
+export function setLegacyStatus(status: "uploaded" | "dismissed") {
+  try {
+    window.localStorage.setItem(LEGACY_STATUS_KEY, status);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function countsOf(d: KitchenData) {
+  return {
+    meals: d.meals.length,
+    missions: d.missions.length,
+    equipment: d.equipment.length,
+    entries: d.entries.length,
+    needs: d.needs.length,
+  };
+}
+
+export function downloadJson(text: string, filename: string) {
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /* ---------- mutations ---------- */
