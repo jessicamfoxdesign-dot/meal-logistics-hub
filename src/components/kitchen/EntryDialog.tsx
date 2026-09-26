@@ -125,14 +125,14 @@ export function EntryDialog({
               {entry.skipped ? "Back on the plan" : "Not today"}
             </Button>
             <Button
-              variant="ghost"
-              className="h-11 text-muted-foreground"
+              variant="outline"
+              className="h-11"
               onClick={() => {
                 deleteEntry(entry.id);
                 onOpenChange(false);
               }}
             >
-              <Trash2 className="size-4" /> Remove
+              <Trash2 className="size-4" /> Remove from plan
             </Button>
           </div>
 
