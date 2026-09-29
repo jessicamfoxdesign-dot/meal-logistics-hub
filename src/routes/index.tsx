@@ -103,9 +103,20 @@ function TodayPage() {
           ((entry.date >= today && entry.date <= helpWindowEnd) ||
             entry.tasks.some((task) => taskDay(entry, task) === today)),
       )
-      .flatMap((entry) => entry.items)
-      .filter((item) => item.kind === "equipment")
-      .map((item) => item.label.trim().toLocaleLowerCase()),
+      .flatMap((entry) => {
+        const equipmentItems = entry.items
+          .filter((item) => item.kind === "equipment")
+          .map((item) => item.label);
+        if (equipmentItems.length > 0) return equipmentItems;
+        // Older planned entries may not have copied their template's equipment.
+        const template = entry.kind === "meal"
+          ? data.meals.find((meal) => meal.id === entry.refId)
+          : entry.kind === "mission"
+            ? data.missions.find((mission) => mission.id === entry.refId)
+            : undefined;
+        return template?.equipment ?? [];
+      })
+      .map((name) => name.trim().toLocaleLowerCase()),
   );
   const helpItems = data.equipment.filter(
     (equipment) =>
