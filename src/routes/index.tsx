@@ -101,7 +101,10 @@ function TodayPage() {
   const helpWindowEnd = addDays(today, 3);
   const plannedEquipment = new Set(
     data.entries
-      .filter((entry) => !entry.skipped && entry.date >= today && entry.date <= helpWindowEnd)
+      .filter((entry) => !entry.skipped && (
+        (entry.date >= today && entry.date <= helpWindowEnd) ||
+        entry.tasks.some((task) => taskDay(entry, task) === today)
+      ))
       .flatMap((entry) => entry.items)
       .filter((item) => item.kind === "equipment")
       .map((item) => item.label.trim().toLocaleLowerCase()),
@@ -308,11 +311,8 @@ function TodayPage() {
             </section>
           ) : null}
 
-          <section className="space-y-3">
+          {tomorrowEntries.length > 0 ? <section className="space-y-3">
             <h2 className="text-xl">Tomorrow</h2>
-            {tomorrowEntries.length === 0 ? (
-              <EmptyNote>Nothing on the plan for tomorrow yet.</EmptyNote>
-            ) : (
               <ul className="grid gap-2">
                 {tomorrowEntries.map((entry) => {
                   const open = entry.items.filter((i) =>
@@ -347,8 +347,7 @@ function TodayPage() {
                   );
                 })}
               </ul>
-            )}
-          </section>
+          </section> : null}
         </div>
       )}
 
