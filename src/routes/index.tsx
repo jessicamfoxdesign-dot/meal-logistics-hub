@@ -98,7 +98,17 @@ function TodayPage() {
     }))
     .filter((g) => g.rows.length > 0);
 
-  const helpItems = data.equipment.filter((e) => e.helpNeeded);
+  const helpWindowEnd = addDays(today, 3);
+  const plannedEquipment = new Set(
+    data.entries
+      .filter((entry) => !entry.skipped && entry.date >= today && entry.date <= helpWindowEnd)
+      .flatMap((entry) => entry.items)
+      .filter((item) => item.kind === "equipment")
+      .map((item) => item.label.trim().toLocaleLowerCase()),
+  );
+  const helpItems = data.equipment.filter(
+    (equipment) => equipment.helpNeeded && plannedEquipment.has(equipment.name.trim().toLocaleLowerCase()),
+  );
 
   const openEntry = data.entries.find((e) => e.id === openId);
 
@@ -131,17 +141,16 @@ function TodayPage() {
         <EmptyNote>Loading your plan…</EmptyNote>
       ) : (
         <div className="space-y-8">
-          <section className="space-y-3">
-            <h2 className="text-xl">Tonight</h2>
-            {todayEntries.length === 0 ? (
-              <EmptyNote>
-                Nothing planned for today.{" "}
-                <button type="button" className="min-h-11 underline" onClick={() => setAdding(true)}>
-                  Add something
-                </button>{" "}
-                if you'd like.
-              </EmptyNote>
-            ) : (
+          {todayEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nothing planned for today.{" "}
+              <Button variant="link" className="h-11 px-1 underline" onClick={() => setAdding(true)}>
+                Add something
+              </Button>
+            </p>
+          ) : (
+            <section className="space-y-3">
+              <h2 className="text-xl">Tonight</h2>
               <ul className="grid gap-3">
                 {todayEntries.map((entry) => (
                   <li
@@ -186,17 +195,14 @@ function TodayPage() {
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
+            </section>
+          )}
 
-          <section className="space-y-3">
+          {attentionByDay.length > 0 ? <section className="space-y-3">
             <h2 className="text-xl">Preflight</h2>
             <p className="text-sm text-muted-foreground">
               Unchecked or missing items for the next {PREFLIGHT_HORIZON_DAYS} days.
             </p>
-            {attentionByDay.length === 0 ? (
-              <EmptyNote>Nothing waiting on a check right now.</EmptyNote>
-            ) : (
               <div className="space-y-4">
                 {attentionByDay.map(({ date, rows }) => (
                   <div key={date} className="space-y-2">
@@ -240,17 +246,14 @@ function TodayPage() {
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+          </section> : null}
 
           {TASK_SECTIONS.map(({ key, title }) => {
             const rows = bySection(key);
+            if (rows.length === 0) return null;
             return (
               <section key={key} className="space-y-3">
                 <h2 className="text-xl">{title}</h2>
-                {rows.length === 0 ? (
-                  <EmptyNote>Nothing here today.</EmptyNote>
-                ) : (
                   <ul className="grid gap-2">
                     {rows.map(({ entry, task }) => (
                       <TaskRow
@@ -263,16 +266,12 @@ function TodayPage() {
                       />
                     ))}
                   </ul>
-                )}
               </section>
             );
           })}
 
-          <section className="space-y-3">
+          {aheadTasks.length > 0 ? <section className="space-y-3">
             <h2 className="text-xl">Sets up a later day</h2>
-            {aheadTasks.length === 0 ? (
-              <EmptyNote>Nothing to get ahead of today.</EmptyNote>
-            ) : (
               <ul className="grid gap-2">
                 {aheadTasks.map(({ entry, task }) => (
                   <TaskRow
@@ -285,8 +284,7 @@ function TodayPage() {
                   />
                 ))}
               </ul>
-            )}
-          </section>
+          </section> : null}
 
           {helpItems.length > 0 ? (
             <section className="space-y-3">
