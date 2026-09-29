@@ -60,16 +60,13 @@ function TodayPage() {
   const todayEntries = data.entries.filter((e) => e.date === today);
   const tomorrowEntries = data.entries.filter((e) => e.date === tomorrow);
 
-  const taskDay = (e: PlanEntry, t: PlanEntry["tasks"][number]) =>
-    t.doDate ?? e.date;
+  const taskDay = (e: PlanEntry, t: PlanEntry["tasks"][number]) => t.doDate ?? e.date;
 
   // Every task whose effective day is today, regardless of phase.
   const todayTasks = data.entries.flatMap((e) =>
     e.skipped
       ? []
-      : e.tasks
-          .filter((t) => taskDay(e, t) === today)
-          .map((t) => ({ entry: e, task: t })),
+      : e.tasks.filter((t) => taskDay(e, t) === today).map((t) => ({ entry: e, task: t })),
   );
 
   // Tasks belonging to other days' entries go to "Sets up a later day";
@@ -82,9 +79,8 @@ function TodayPage() {
   const bySection = (section: TaskSection) =>
     sameDayTasks.filter(({ task }) => sectionOf(task.phase) === section);
 
-  const attentionByDay = Array.from(
-    { length: PREFLIGHT_HORIZON_DAYS + 1 },
-    (_, i) => addDays(today, i),
+  const attentionByDay = Array.from({ length: PREFLIGHT_HORIZON_DAYS + 1 }, (_, i) =>
+    addDays(today, i),
   )
     .map((date) => ({
       date,
@@ -98,7 +94,35 @@ function TodayPage() {
     }))
     .filter((g) => g.rows.length > 0);
 
-  const helpItems = data.equipment.filter((e) => e.helpNeeded);
+  const helpWindowEnd = addDays(today, 3);
+  const plannedEquipment = new Set(
+    data.entries
+      .filter(
+        (entry) =>
+          !entry.skipped &&
+          ((entry.date >= today && entry.date <= helpWindowEnd) ||
+            entry.tasks.some((task) => taskDay(entry, task) === today)),
+      )
+      .flatMap((entry) => {
+        const equipmentItems = entry.items
+          .filter((item) => item.kind === "equipment")
+          .map((item) => item.label);
+        if (equipmentItems.length > 0) return equipmentItems;
+        // Older planned entries may not have copied their template's equipment.
+        const template =
+          entry.kind === "meal"
+            ? data.meals.find((meal) => meal.id === entry.refId)
+            : entry.kind === "mission"
+              ? data.missions.find((mission) => mission.id === entry.refId)
+              : undefined;
+        return template?.equipment ?? [];
+      })
+      .map((name) => name.trim().toLocaleLowerCase()),
+  );
+  const helpItems = data.equipment.filter(
+    (equipment) =>
+      equipment.helpNeeded && plannedEquipment.has(equipment.name.trim().toLocaleLowerCase()),
+  );
 
   const openEntry = data.entries.find((e) => e.id === openId);
 
@@ -131,17 +155,20 @@ function TodayPage() {
         <EmptyNote>Loading your plan…</EmptyNote>
       ) : (
         <div className="space-y-8">
-          <section className="space-y-3">
-            <h2 className="text-xl">Tonight</h2>
-            {todayEntries.length === 0 ? (
-              <EmptyNote>
-                Nothing planned for today.{" "}
-                <button type="button" className="min-h-11 underline" onClick={() => setAdding(true)}>
-                  Add something
-                </button>{" "}
-                if you'd like.
-              </EmptyNote>
-            ) : (
+          {todayEntries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nothing planned for today.{" "}
+              <Button
+                variant="link"
+                className="h-11 px-1 underline"
+                onClick={() => setAdding(true)}
+              >
+                Add something
+              </Button>
+            </p>
+          ) : (
+            <section className="space-y-3">
+              <h2 className="text-xl">Tonight</h2>
               <ul className="grid gap-3">
                 {todayEntries.map((entry) => (
                   <li
@@ -169,16 +196,11 @@ function TodayPage() {
                         <Button
                           variant="outline"
                           className="h-11"
-                          onClick={() =>
-                            patchEntry(entry.id, { skipped: !entry.skipped })
-                          }
+                          onClick={() => patchEntry(entry.id, { skipped: !entry.skipped })}
                         >
                           {entry.skipped ? "Back on" : "Not today"}
                         </Button>
-                        <Button
-                          className="h-11"
-                          onClick={() => setOpenId(entry.id)}
-                        >
+                        <Button className="h-11" onClick={() => setOpenId(entry.id)}>
                           Open
                         </Button>
                       </div>
@@ -186,26 +208,20 @@ function TodayPage() {
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
+            </section>
+          )}
 
-          <section className="space-y-3">
-            <h2 className="text-xl">Preflight</h2>
-            <p className="text-sm text-muted-foreground">
-              Unchecked or missing items for the next {PREFLIGHT_HORIZON_DAYS} days.
-            </p>
-            {attentionByDay.length === 0 ? (
-              <EmptyNote>Nothing waiting on a check right now.</EmptyNote>
-            ) : (
+          {attentionByDay.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-xl">Preflight</h2>
+              <p className="text-sm text-muted-foreground">
+                Unchecked or missing items for the next {PREFLIGHT_HORIZON_DAYS} days.
+              </p>
               <div className="space-y-4">
                 {attentionByDay.map(({ date, rows }) => (
                   <div key={date} className="space-y-2">
                     <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-                      {date === today
-                        ? "Today"
-                        : date === tomorrow
-                          ? "Tomorrow"
-                          : formatDay(date)}
+                      {date === today ? "Today" : date === tomorrow ? "Tomorrow" : formatDay(date)}
                     </h3>
                     <ul className="grid gap-2">
                       {rows.map(({ entry, item }) => (
@@ -240,39 +256,34 @@ function TodayPage() {
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          ) : null}
 
           {TASK_SECTIONS.map(({ key, title }) => {
             const rows = bySection(key);
+            if (rows.length === 0) return null;
             return (
               <section key={key} className="space-y-3">
                 <h2 className="text-xl">{title}</h2>
-                {rows.length === 0 ? (
-                  <EmptyNote>Nothing here today.</EmptyNote>
-                ) : (
-                  <ul className="grid gap-2">
-                    {rows.map(({ entry, task }) => (
-                      <TaskRow
-                        key={task.id}
-                        entryId={entry.id}
-                        entryTitle={entry.title}
-                        task={task}
-                        baseDate={entry.date}
-                        onOpen={() => setOpenId(entry.id)}
-                      />
-                    ))}
-                  </ul>
-                )}
+                <ul className="grid gap-2">
+                  {rows.map(({ entry, task }) => (
+                    <TaskRow
+                      key={task.id}
+                      entryId={entry.id}
+                      entryTitle={entry.title}
+                      task={task}
+                      baseDate={entry.date}
+                      onOpen={() => setOpenId(entry.id)}
+                    />
+                  ))}
+                </ul>
               </section>
             );
           })}
 
-          <section className="space-y-3">
-            <h2 className="text-xl">Sets up a later day</h2>
-            {aheadTasks.length === 0 ? (
-              <EmptyNote>Nothing to get ahead of today.</EmptyNote>
-            ) : (
+          {aheadTasks.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-xl">Sets up a later day</h2>
               <ul className="grid gap-2">
                 {aheadTasks.map(({ entry, task }) => (
                   <TaskRow
@@ -285,8 +296,8 @@ function TodayPage() {
                   />
                 ))}
               </ul>
-            )}
-          </section>
+            </section>
+          ) : null}
 
           {helpItems.length > 0 ? (
             <section className="space-y-3">
@@ -301,8 +312,7 @@ function TodayPage() {
                   >
                     <p className="font-medium">{eq.name}</p>
                     <p className="text-sm text-attention-foreground">
-                      {eq.location || "Location not set"} — ask early if it's
-                      needed soon.
+                      {eq.location || "Location not set"} — ask early if it's needed soon.
                     </p>
                   </li>
                 ))}
@@ -310,16 +320,12 @@ function TodayPage() {
             </section>
           ) : null}
 
-          <section className="space-y-3">
-            <h2 className="text-xl">Tomorrow</h2>
-            {tomorrowEntries.length === 0 ? (
-              <EmptyNote>Nothing on the plan for tomorrow yet.</EmptyNote>
-            ) : (
+          {tomorrowEntries.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-xl">Tomorrow</h2>
               <ul className="grid gap-2">
                 {tomorrowEntries.map((entry) => {
-                  const open = entry.items.filter((i) =>
-                    needsAttention(i.status),
-                  ).length;
+                  const open = entry.items.filter((i) => needsAttention(i.status)).length;
                   return (
                     <li
                       key={entry.id}
@@ -333,9 +339,7 @@ function TodayPage() {
                             {open} item{open > 1 ? "s" : ""} to sort out
                           </p>
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            Preflight looks settled.
-                          </p>
+                          <p className="text-sm text-muted-foreground">Preflight looks settled.</p>
                         )}
                       </div>
                       <Button
@@ -349,8 +353,8 @@ function TodayPage() {
                   );
                 })}
               </ul>
-            )}
-          </section>
+            </section>
+          ) : null}
         </div>
       )}
 
@@ -385,9 +389,7 @@ function TaskRow({
         aria-label={task.text}
       />
       <div className="min-w-40 flex-1">
-        <p className={task.done ? "text-muted-foreground line-through" : ""}>
-          {task.text}
-        </p>
+        <p className={task.done ? "text-muted-foreground line-through" : ""}>{task.text}</p>
         <p className="text-xs text-muted-foreground">
           {entryTitle}
           {task.keeps ? <span className="italic"> · {task.keeps}</span> : null}
@@ -406,13 +408,7 @@ function TaskRow({
   );
 }
 
-function DeferButton({
-  current,
-  onPick,
-}: {
-  current: string;
-  onPick: (date: string) => void;
-}) {
+function DeferButton({ current, onPick }: { current: string; onPick: (date: string) => void }) {
   const today = useToday();
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -462,11 +458,7 @@ function DeferButton({
                 {label}
               </Button>
             ))}
-            <Button
-              variant="ghost"
-              className="h-11 justify-start"
-              onClick={() => setPicking(true)}
-            >
+            <Button variant="ghost" className="h-11 justify-start" onClick={() => setPicking(true)}>
               Pick a date…
             </Button>
           </div>
