@@ -4,6 +4,7 @@ import { buildSeed } from "./seed";
 import { normalizeData } from "./normalize";
 import type {
   Equipment,
+  GroceryItem,
   KitchenData,
   Meal,
   Mission,
@@ -21,12 +22,13 @@ export const LEGACY_KEY = "kitchen-plan-v1";
 const LEGACY_STATUS_KEY = "kitchen-plan-v1-status"; // "uploaded" | "dismissed"
 
 type Collection = keyof KitchenData;
-const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs"> = {
+const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs" | "groceries"> = {
   meals: "meals",
   missions: "missions",
   equipment: "equipment",
   entries: "plan_entries",
   needs: "needs",
+  groceries: "groceries",
 };
 const COLLECTIONS = Object.keys(TABLE) as Collection[];
 
@@ -36,6 +38,7 @@ const emptyData: KitchenData = {
   equipment: [],
   entries: [],
   needs: [],
+  groceries: [],
 };
 
 export interface SyncState {
@@ -385,6 +388,7 @@ export function parseBackup(text: string): KitchenData {
     ["needs", ["id", "text"]],
   ];
   for (const [key, fields] of checks) {
+    if (raw[key] === undefined) raw[key] = []; // older backups may lack newer collections
     if (!allHave(raw[key], fields))
       throw new Error(`This file doesn't look like a Kitchen Plan backup (problem with "${key}").`);
   }
@@ -438,6 +442,7 @@ export function countsOf(d: KitchenData) {
     equipment: d.equipment.length,
     entries: d.entries.length,
     needs: d.needs.length,
+    groceries: d.groceries.length,
   };
 }
 
@@ -588,6 +593,23 @@ export const toggleNeed = (needId: string) =>
 
 export const removeNeed = (needId: string) =>
   update((d) => ({ ...d, needs: d.needs.filter((n) => n.id !== needId) }));
+
+export const addGrocery = (item: GroceryItem) =>
+  update((d) => ({ ...d, groceries: [...d.groceries, item] }));
+
+export const toggleGrocery = (itemId: string) =>
+  update((d) => ({
+    ...d,
+    groceries: d.groceries.map((g) =>
+      g.id === itemId ? { ...g, done: !g.done } : g,
+    ),
+  }));
+
+export const removeGrocery = (itemId: string) =>
+  update((d) => ({ ...d, groceries: d.groceries.filter((g) => g.id !== itemId) }));
+
+export const clearCheckedGroceries = () =>
+  update((d) => ({ ...d, groceries: d.groceries.filter((g) => !g.done) }));
 
 export function useStable<T extends (...args: never[]) => unknown>(fn: T) {
   return useCallback(fn, [fn]);
