@@ -100,6 +100,8 @@ export interface PlanItem {
   kind: ItemKind;
   status: ItemStatus;
   note: string;
+  /** Hidden because this occurrence is already prepared. */
+  setAside?: boolean;
 }
 
 export interface PlanTask {
@@ -112,6 +114,10 @@ export interface PlanTask {
   keeps?: string;
   /** If set, the task shows up on this day instead of the entry's day. */
   doDate?: string;
+  /** Hidden because this occurrence is already prepared. */
+  setAside?: boolean;
+  /** Added automatically when the entry was marked already prepared. */
+  forPrepared?: boolean;
 }
 
 export type EntryKind =
@@ -130,6 +136,8 @@ export interface PlanEntry {
   title: string;
   notes: string;
   skipped: boolean;
+  /** This occurrence is already cooked / from the freezer. */
+  prepared?: boolean;
   items: PlanItem[];
   tasks: PlanTask[];
 }

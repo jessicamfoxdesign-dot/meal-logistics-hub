@@ -120,3 +120,29 @@ export const emptyMission = (): Mission => ({
   prep: [],
   finish: [],
 });
+
+/**
+ * Mark an occurrence as already prepared (e.g. from the freezer) or back to
+ * from scratch. The from-scratch work is set aside, never deleted, and a thaw
+ * + reheat pair is added. Turning it off restores everything exactly.
+ */
+export function setPrepared(entry: PlanEntry, on: boolean): PlanEntry {
+  if (on) {
+    return {
+      ...entry,
+      prepared: true,
+      items: entry.items.map((i) => (i.status === "unset" ? { ...i, setAside: true } : i)),
+      tasks: [
+        ...entry.tasks.map((t) => (t.done ? t : { ...t, setAside: true })),
+        { id: uid(), text: "Move from freezer to fridge to thaw", phase: "setup", done: false, notes: "", doDate: addDays(entry.date, -1), forPrepared: true },
+        { id: uid(), text: "Reheat", phase: "cook", done: false, notes: "", forPrepared: true },
+      ],
+    };
+  }
+  return {
+    ...entry,
+    prepared: false,
+    items: entry.items.map(({ setAside: _s, ...i }) => i),
+    tasks: entry.tasks.filter((t) => !t.forPrepared).map(({ setAside: _s, ...t }) => t),
+  };
+}

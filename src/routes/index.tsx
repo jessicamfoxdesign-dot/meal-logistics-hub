@@ -66,7 +66,7 @@ function TodayPage() {
   const todayTasks = data.entries.flatMap((e) =>
     e.skipped
       ? []
-      : e.tasks.filter((t) => taskDay(e, t) === today).map((t) => ({ entry: e, task: t })),
+      : e.tasks.filter((t) => !t.setAside && taskDay(e, t) === today).map((t) => ({ entry: e, task: t })),
   );
 
   // Tasks belonging to other days' entries go to "Sets up a later day";
@@ -88,7 +88,7 @@ function TodayPage() {
         .filter((e) => !e.skipped && e.date === date)
         .flatMap((e) =>
           e.items
-            .filter((i) => needsAttention(i.status) || i.status === "unset")
+            .filter((i) => !i.setAside && (needsAttention(i.status) || i.status === "unset"))
             .map((i) => ({ entry: e, item: i })),
         ),
     }))
@@ -101,13 +101,13 @@ function TodayPage() {
         (entry) =>
           !entry.skipped &&
           ((entry.date >= today && entry.date <= helpWindowEnd) ||
-            entry.tasks.some((task) => taskDay(entry, task) === today)),
+            entry.tasks.some((task) => !task.setAside && taskDay(entry, task) === today)),
       )
       .flatMap((entry) => {
         const equipmentItems = entry.items
-          .filter((item) => item.kind === "equipment")
+          .filter((item) => item.kind === "equipment" && !item.setAside)
           .map((item) => item.label);
-        if (equipmentItems.length > 0) return equipmentItems;
+        if (equipmentItems.length > 0 || entry.prepared) return equipmentItems;
         // Older planned entries may not have copied their template's equipment.
         const template =
           entry.kind === "meal"
@@ -179,6 +179,7 @@ function TodayPage() {
                       <div>
                         <p className="text-xs tracking-wide text-muted-foreground uppercase">
                           {entry.kind === "mission" ? "Mission" : "Dinner"}
+                          {entry.prepared ? " · Already made" : ""}
                         </p>
                         <h3 className="text-2xl">{entry.title}</h3>
                         {entry.skipped ? (
@@ -325,7 +326,7 @@ function TodayPage() {
               <h2 className="text-xl">Tomorrow</h2>
               <ul className="grid gap-2">
                 {tomorrowEntries.map((entry) => {
-                  const open = entry.items.filter((i) => needsAttention(i.status)).length;
+                  const open = entry.items.filter((i) => !i.setAside && needsAttention(i.status)).length;
                   return (
                     <li
                       key={entry.id}
