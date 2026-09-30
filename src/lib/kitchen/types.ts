@@ -150,10 +150,17 @@ export interface NeedItem {
   sourceLabel?: string;
 }
 
+export interface GroceryItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 export interface KitchenData {
   meals: Meal[];
   missions: Mission[];
   equipment: Equipment[];
   entries: PlanEntry[];
   needs: NeedItem[];
+  groceries: GroceryItem[];
 }

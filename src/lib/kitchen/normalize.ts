@@ -44,5 +44,6 @@ export function normalizeData(d: KitchenData): KitchenData {
     ...d,
     meals: (d.meals ?? []).map(normalizeMeal),
     missions: (d.missions ?? []).map(normalizeMission),
+    groceries: d.groceries ?? [],
   };
 }

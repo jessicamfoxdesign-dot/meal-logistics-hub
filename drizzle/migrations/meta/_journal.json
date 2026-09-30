@@ -8,6 +8,13 @@
       "when": 1790428835190,
       "tag": "0000_shared_kitchen_data",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790764519316,
+      "tag": "0001_create_groceries",
+      "breakpoints": true
     }
   ]
 }
