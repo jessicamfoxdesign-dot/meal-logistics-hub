@@ -32,6 +32,7 @@ import {
   type Phase,
   type PlanEntry,
 } from "@/lib/kitchen/types";
+import { setPrepared } from "@/lib/kitchen/create";
 import { ListEditor, StatusChips, needsAttention } from "./bits";
 
 const PHASES: Phase[] = ["setup", "prep", "cook"];
@@ -94,6 +95,7 @@ export function EntryDialog({
           <DialogDescription className="text-left">
             {formatDay(entry.date)}
             {entry.skipped ? " · Not today" : ""}
+            {entry.prepared ? " · Already made" : ""}
           </DialogDescription>
         </DialogHeader>
 
@@ -136,13 +138,54 @@ export function EntryDialog({
             </Button>
           </div>
 
+          {entry.kind === "meal" || entry.kind === "mission" || entry.prepared ? (
+            <section className="space-y-3 rounded-xl border border-border bg-card p-3">
+              <label className="flex min-h-11 cursor-pointer items-center gap-3">
+                <Checkbox
+                  checked={!!entry.prepared}
+                  onCheckedChange={(v) => saveEntry(setPrepared(entry, v === true))}
+                  className="size-6"
+                />
+                <span>
+                  <span className="font-medium">Already made / from the freezer</span>
+                  <span className="block text-sm text-muted-foreground">
+                    Just this time. From-scratch steps are set aside; thaw and reheat are added.
+                  </span>
+                </span>
+              </label>
+              {entry.items.some((i) => i.setAside) || entry.tasks.some((t) => t.setAside) ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Set aside this time — tap anything that still needs doing, like a side:
+                  </p>
+                  <ul className="flex flex-wrap gap-2">
+                    {entry.items.filter((i) => i.setAside).map((i) => (
+                      <li key={i.id}>
+                        <Button variant="outline" className="h-11" onClick={() => patchItem(entry.id, i.id, { setAside: false })}>
+                          <Plus className="size-4" /> {i.label}
+                        </Button>
+                      </li>
+                    ))}
+                    {entry.tasks.filter((t) => t.setAside).map((t) => (
+                      <li key={t.id}>
+                        <Button variant="outline" className="h-11" onClick={() => patchTask(entry.id, t.id, { setAside: false })}>
+                          <Plus className="size-4" /> {t.text}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
           <section className="space-y-3">
             <h3 className="text-lg">Preflight</h3>
             <p className="text-sm text-muted-foreground">
               Check what's here while there's still time to change course.
             </p>
             <ul className="space-y-3">
-              {entry.items.map((item) => (
+              {entry.items.filter((item) => !item.setAside).map((item) => (
                 <li
                   key={item.id}
                   className={`rounded-xl border p-3 ${
@@ -252,7 +295,7 @@ export function EntryDialog({
               <h3 className="text-lg">{PHASE_LABEL[phase]}</h3>
               <ul className="space-y-2">
                 {entry.tasks
-                  .filter((t) => t.phase === phase)
+                  .filter((t) => t.phase === phase && !t.setAside)
                   .map((t, i) => ({ t, i, day: t.doDate ?? entry.date }))
                   .sort((a, b) => a.day.localeCompare(b.day) || a.i - b.i)
                   .map(({ t: task, day }, idx, arr) => (
