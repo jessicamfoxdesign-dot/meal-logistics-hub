@@ -605,6 +605,14 @@ export const toggleGrocery = (itemId: string) =>
     ),
   }));
 
+export const patchGrocery = (itemId: string, patch: Partial<GroceryItem>) =>
+  update((d) => ({
+    ...d,
+    groceries: d.groceries.map((g) =>
+      g.id === itemId ? { ...g, ...patch } : g,
+    ),
+  }));
+
 export const removeGrocery = (itemId: string) =>
   update((d) => ({ ...d, groceries: d.groceries.filter((g) => g.id !== itemId) }));
 
