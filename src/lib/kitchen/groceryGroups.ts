@@ -115,6 +115,10 @@ const KW: [GroceryCategory, string[]][] = [
 /** Infer a department from the item text. Ambiguous items go to Other. */
 export function inferCategory(text: string): GroceryCategory {
   const t = ` ${text.toLowerCase()} `;
+  // Strong signals first: "frozen …" beats the food word, and broth/stock is
+  // a pantry staple even when it names a meat.
+  if (t.includes("frozen")) return "frozen";
+  if (/\b(broth|stock|bouillon)\b/.test(t)) return "pantry";
   for (const [cat, words] of KW) {
     for (const w of words) {
       if (t.includes(w)) return cat;
