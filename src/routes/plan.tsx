@@ -104,7 +104,7 @@ function PlanPage() {
                 <ul className="mt-3 space-y-2">
                   {entries.map((entry) => {
                     const open = entry.items.filter((i) =>
-                      needsAttention(i.status),
+                      !i.setAside && needsAttention(i.status),
                     ).length;
                     return (
                       <li
