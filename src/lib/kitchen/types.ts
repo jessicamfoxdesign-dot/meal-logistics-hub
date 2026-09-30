@@ -150,10 +150,22 @@ export interface NeedItem {
   sourceLabel?: string;
 }
 
+export type GroceryCategory =
+  | "produce"
+  | "bakery"
+  | "meat"
+  | "dairy"
+  | "frozen"
+  | "pantry"
+  | "household"
+  | "other";
+
 export interface GroceryItem {
   id: string;
   text: string;
   done: boolean;
+  /** User-corrected department; when absent it's inferred from the text. */
+  category?: GroceryCategory;
 }
 
 export interface KitchenData {
