@@ -173,7 +173,9 @@ function TodayPage() {
                 {todayEntries.map((entry) => (
                   <li
                     key={entry.id}
-                    className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+                    className={`rounded-2xl border border-border bg-card p-4 shadow-sm ${
+                      entry.done ? "opacity-60" : ""
+                    }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -181,7 +183,11 @@ function TodayPage() {
                           {entry.kind === "mission" ? "Mission" : "Dinner"}
                           {entry.prepared ? " · Already made" : ""}
                         </p>
-                        <h3 className="text-2xl">{entry.title}</h3>
+                        <h3
+                          className={`text-2xl ${entry.done ? "line-through" : ""}`}
+                        >
+                          {entry.title}
+                        </h3>
                         {entry.skipped ? (
                           <p className="mt-1 text-sm text-muted-foreground">
                             Marked not today — everything is kept.
@@ -194,6 +200,13 @@ function TodayPage() {
                         ) : null}
                       </div>
                       <div className="flex gap-2">
+                        <Button
+                          variant={entry.done ? "default" : "outline"}
+                          className="h-11"
+                          onClick={() => patchEntry(entry.id, { done: !entry.done })}
+                        >
+                          {entry.done ? "Done ✓" : "Mark done"}
+                        </Button>
                         <Button
                           variant="outline"
                           className="h-11"
