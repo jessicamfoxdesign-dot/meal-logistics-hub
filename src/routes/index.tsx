@@ -64,7 +64,7 @@ function TodayPage() {
 
   // Every task whose effective day is today, regardless of phase.
   const todayTasks = data.entries.flatMap((e) =>
-    e.skipped
+    e.skipped || e.done
       ? []
       : e.tasks.filter((t) => !t.setAside && taskDay(e, t) === today).map((t) => ({ entry: e, task: t })),
   );
@@ -85,7 +85,7 @@ function TodayPage() {
     .map((date) => ({
       date,
       rows: data.entries
-        .filter((e) => !e.skipped && e.date === date)
+        .filter((e) => !e.skipped && !e.done && e.date === date)
         .flatMap((e) =>
           e.items
             .filter((i) => !i.setAside && (needsAttention(i.status) || i.status === "unset"))
