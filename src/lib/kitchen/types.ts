@@ -138,6 +138,8 @@ export interface PlanEntry {
   skipped: boolean;
   /** This occurrence is already cooked / from the freezer. */
   prepared?: boolean;
+  /** The user marked this occurrence finished. */
+  done?: boolean;
   items: PlanItem[];
   tasks: PlanTask[];
 }
