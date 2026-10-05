@@ -62,18 +62,25 @@ function TodayPage() {
 
   const taskDay = (e: PlanEntry, t: PlanEntry["tasks"][number]) => t.doDate ?? e.date;
 
-  // Every task whose effective day is today, regardless of phase.
+  // Today's tasks plus unfinished tasks carried forward from earlier days.
+  const isOnToday = (e: PlanEntry, t: PlanEntry["tasks"][number]) => {
+    const d = taskDay(e, t);
+    return d === today || (d < today && !t.done);
+  };
+
   const todayTasks = data.entries.flatMap((e) =>
     e.skipped || e.done
       ? []
-      : e.tasks.filter((t) => !t.setAside && taskDay(e, t) === today).map((t) => ({ entry: e, task: t })),
+      : e.tasks
+          .filter((t) => !t.setAside && isOnToday(e, t))
+          .map((t) => ({ entry: e, task: t })),
   );
 
   // Tasks belonging to other days' entries go to "Sets up a later day";
   // all others are bucketed by phase. Any unknown phase falls into setup,
   // so no task can drop out of view.
-  const aheadTasks = todayTasks.filter(({ entry }) => entry.date !== today);
-  const sameDayTasks = todayTasks.filter(({ entry }) => entry.date === today);
+  const aheadTasks = todayTasks.filter(({ entry }) => entry.date > today);
+  const sameDayTasks = todayTasks.filter(({ entry }) => entry.date <= today);
   const sectionOf = (phase: Phase): TaskSection =>
     phase === "prep" ? "prep" : phase === "cook" ? "cook" : "setup";
   const bySection = (section: TaskSection) =>
@@ -101,7 +108,7 @@ function TodayPage() {
         (entry) =>
           !entry.skipped &&
           ((entry.date >= today && entry.date <= helpWindowEnd) ||
-            entry.tasks.some((task) => !task.setAside && taskDay(entry, task) === today)),
+            entry.tasks.some((task) => !task.setAside && isOnToday(entry, task))),
       )
       .flatMap((entry) => {
         const equipmentItems = entry.items
@@ -394,6 +401,8 @@ function TaskRow({
   baseDate: string;
   onOpen: () => void;
 }) {
+  const today = useToday();
+  const scheduled = task.doDate ?? baseDate;
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
       <Checkbox
@@ -407,6 +416,13 @@ function TaskRow({
         <p className="text-xs text-muted-foreground">
           {entryTitle}
           {task.keeps ? <span className="italic"> · {task.keeps}</span> : null}
+          {scheduled < today ? (
+            <span className="font-medium text-attention-foreground">
+              {" "}
+              · Carried forward from{" "}
+              {scheduled === addDays(today, -1) ? "yesterday" : formatDay(scheduled)}
+            </span>
+          ) : null}
         </p>
       </div>
       <div className="flex gap-2">
