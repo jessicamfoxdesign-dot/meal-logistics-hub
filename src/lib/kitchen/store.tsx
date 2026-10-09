@@ -4,8 +4,10 @@ import { buildSeed } from "./seed";
 import { normalizeData } from "./normalize";
 import type {
   Equipment,
+  Chore,
   GroceryItem,
   KitchenData,
+  TodoItem,
   Meal,
   Mission,
   NeedItem,
@@ -22,13 +24,15 @@ export const LEGACY_KEY = "kitchen-plan-v1";
 const LEGACY_STATUS_KEY = "kitchen-plan-v1-status"; // "uploaded" | "dismissed"
 
 type Collection = keyof KitchenData;
-const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs" | "groceries"> = {
+const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs" | "groceries" | "todos" | "chores"> = {
   meals: "meals",
   missions: "missions",
   equipment: "equipment",
   entries: "plan_entries",
   needs: "needs",
   groceries: "groceries",
+  todos: "todos",
+  chores: "chores",
 };
 const COLLECTIONS = Object.keys(TABLE) as Collection[];
 
@@ -39,6 +43,8 @@ const emptyData: KitchenData = {
   entries: [],
   needs: [],
   groceries: [],
+  todos: [],
+  chores: [],
 };
 
 export interface SyncState {
@@ -386,6 +392,9 @@ export function parseBackup(text: string): KitchenData {
     ["equipment", ["id", "name"]],
     ["entries", ["id", "date", "title"]],
     ["needs", ["id", "text"]],
+    ["groceries", ["id", "text"]],
+    ["todos", ["id", "text"]],
+    ["chores", ["id", "name"]],
   ];
   for (const [key, fields] of checks) {
     if (raw[key] === undefined) raw[key] = []; // older backups may lack newer collections
@@ -443,6 +452,8 @@ export function countsOf(d: KitchenData) {
     entries: d.entries.length,
     needs: d.needs.length,
     groceries: d.groceries.length,
+    todos: d.todos.length,
+    chores: d.chores.length,
   };
 }
 
@@ -618,6 +629,54 @@ export const removeGrocery = (itemId: string) =>
 
 export const clearCheckedGroceries = () =>
   update((d) => ({ ...d, groceries: d.groceries.filter((g) => !g.done) }));
+
+export const addTodo = (item: TodoItem) =>
+  update((d) => ({ ...d, todos: [...d.todos, item] }));
+
+export const patchTodo = (itemId: string, patch: Partial<TodoItem>) =>
+  update((d) => ({
+    ...d,
+    todos: d.todos.map((t) => (t.id === itemId ? { ...t, ...patch } : t)),
+  }));
+
+export const toggleTodo = (itemId: string) =>
+  update((d) => ({
+    ...d,
+    todos: d.todos.map((t) => (t.id === itemId ? { ...t, done: !t.done } : t)),
+  }));
+
+export const removeTodo = (itemId: string) =>
+  update((d) => ({ ...d, todos: d.todos.filter((t) => t.id !== itemId) }));
+
+export const clearCompletedTodos = () =>
+  update((d) => ({ ...d, todos: d.todos.filter((t) => !t.done) }));
+
+export const saveChore = (chore: Chore) =>
+  update((d) => ({
+    ...d,
+    chores: d.chores.some((c) => c.id === chore.id)
+      ? d.chores.map((c) => (c.id === chore.id ? chore : c))
+      : [...d.chores, chore],
+  }));
+
+export const patchChore = (choreId: string, patch: Partial<Chore>) =>
+  update((d) => ({
+    ...d,
+    chores: d.chores.map((c) => (c.id === choreId ? { ...c, ...patch } : c)),
+  }));
+
+export const removeChore = (choreId: string) =>
+  update((d) => ({ ...d, chores: d.chores.filter((c) => c.id !== choreId) }));
+
+/** Persist a new manual order (ids in the desired order). */
+export const reorderChores = (ids: string[]) =>
+  update((d) => ({
+    ...d,
+    chores: d.chores.map((c) => {
+      const order = ids.indexOf(c.id);
+      return order === -1 || c.order === order ? c : { ...c, order };
+    }),
+  }));
 
 export function useStable<T extends (...args: never[]) => unknown>(fn: T) {
   return useCallback(fn, [fn]);

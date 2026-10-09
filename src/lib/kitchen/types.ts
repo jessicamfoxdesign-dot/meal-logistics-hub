@@ -170,6 +170,24 @@ export interface GroceryItem {
   category?: GroceryCategory;
 }
 
+export interface TodoItem {
+  id: string;
+  text: string;
+  done: boolean;
+  /** Manually pinned to the Today page. Never set or cleared automatically. */
+  today?: boolean;
+}
+
+export interface Chore {
+  id: string;
+  name: string;
+  /** yyyy-MM-dd; absent = never done */
+  lastDone?: string;
+  notes?: string;
+  /** Manual order, used as a tiebreak within the staleness sort. */
+  order?: number;
+}
+
 export interface KitchenData {
   meals: Meal[];
   missions: Mission[];
@@ -177,4 +195,6 @@ export interface KitchenData {
   entries: PlanEntry[];
   needs: NeedItem[];
   groceries: GroceryItem[];
+  todos: TodoItem[];
+  chores: Chore[];
 }
