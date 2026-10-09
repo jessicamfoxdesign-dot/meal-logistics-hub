@@ -122,7 +122,7 @@ function ChoresPage() {
     stalenessRatio(sorted[i]!, today) === stalenessRatio(sorted[j]!, today);
 
   return (
-    <Shell title="Chores" subtitle="Whatever has gone longest sits at the top.">
+    <Shell title="Chores" subtitle="What most needs doing sits at the top.">
       <div className="space-y-5">
         <div className="flex gap-2">
           <Input
@@ -190,6 +190,7 @@ function ChoreRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(chore.name);
   const [notes, setNotes] = useState(chore.notes ?? "");
+  const [intervalDays, setIntervalDays] = useState<number | undefined>(chore.intervalDays);
 
   if (editing) {
     return (
