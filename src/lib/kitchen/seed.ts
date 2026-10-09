@@ -282,5 +282,7 @@ export function buildSeed(today: string, tomorrow: string): KitchenData {
       { id: id("need"), text: "Enchilada sauce", done: false, sourceLabel: "Enchiladas" },
     ],
     groceries: [],
+    todos: [],
+    chores: [],
   } as KitchenData;
 }

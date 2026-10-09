@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, CircleAlert, HandHelping, Plus } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
+import { TodoRow } from "@/components/kitchen/TodoRow";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
@@ -132,6 +133,10 @@ function TodayPage() {
   );
 
   const openEntry = data.entries.find((e) => e.id === openId);
+  const pinnedTodos = [
+    ...data.todos.filter((t) => t.today && !t.done),
+    ...data.todos.filter((t) => t.today && t.done),
+  ];
 
   return (
     <Shell
@@ -315,6 +320,17 @@ function TodayPage() {
                     baseDate={entry.date}
                     onOpen={() => setOpenId(entry.id)}
                   />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {pinnedTodos.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-xl">To-do today</h2>
+              <ul className="grid gap-2">
+                {pinnedTodos.map((t) => (
+                  <TodoRow key={t.id} item={t} />
                 ))}
               </ul>
             </section>

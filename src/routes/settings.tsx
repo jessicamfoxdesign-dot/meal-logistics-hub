@@ -91,7 +91,8 @@ function SettingsPage() {
           <p className="text-sm text-muted-foreground">
             Currently: {data.meals.length} meals · {data.missions.length} missions ·{" "}
             {data.equipment.length} equipment · {data.entries.length} plan entries ·{" "}
-            {data.needs.length} needs
+            {data.needs.length} needs · {data.groceries.length} groceries ·{" "}
+            {data.todos.length} to-dos · {data.chores.length} chores
           </p>
           <div className="flex flex-wrap gap-2">
             <Button className="h-11" onClick={doExport}>

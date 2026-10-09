@@ -1,8 +1,11 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
   CalendarDays,
   ChefHat,
+  ClipboardList,
+  ListTodo,
+  Sparkles,
   ListChecks,
   Rocket,
   Settings,
@@ -19,8 +22,22 @@ const NAV = [
   { to: "/equipment", label: "Equipment", icon: Wrench },
   { to: "/needs", label: "Needs", icon: ListChecks },
   { to: "/grocery", label: "Groceries", icon: ShoppingBasket },
+  { to: "/todo", label: "To-do", icon: ListTodo },
+  { to: "/chores", label: "Chores", icon: Sparkles },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
+
+/** Needs, Groceries and To-do share one "Lists" tab on phones. */
+const LIST_PATHS = ["/needs", "/grocery", "/todo"] as const;
+const LIST_TABS = [
+  { to: "/needs", label: "Needs" },
+  { to: "/grocery", label: "Groceries" },
+  { to: "/todo", label: "To-do" },
+] as const;
+
+function isListPath(p: string) {
+  return (LIST_PATHS as readonly string[]).includes(p);
+}
 
 export function Shell({
   title,
@@ -33,6 +50,8 @@ export function Shell({
   action?: ReactNode;
   children: ReactNode;
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onList = isListPath(pathname);
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <header className="border-b border-border/70 bg-card/80 backdrop-blur">
@@ -69,12 +88,29 @@ export function Shell({
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">
+        {onList ? (
+          <nav
+            aria-label="Lists"
+            className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-secondary p-1 md:hidden"
+          >
+            {LIST_TABS.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className="flex min-h-11 items-center justify-center rounded-lg text-sm text-muted-foreground"
+                activeProps={{ className: "bg-card text-foreground font-medium shadow-sm" }}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
         {children}
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden">
         <div className="grid grid-cols-4">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {NAV.filter(({ to }) => !isListPath(to)).map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -86,6 +122,15 @@ export function Shell({
               {label}
             </Link>
           ))}
+          <Link
+            to="/needs"
+            className={`flex min-h-16 flex-col items-center justify-center gap-1 px-1 text-[11px] ${
+              onList ? "text-primary font-semibold" : "text-muted-foreground"
+            }`}
+          >
+            <ClipboardList className="size-5" />
+            Lists
+          </Link>
         </div>
       </nav>
     </div>

@@ -29,6 +29,27 @@ export type Database = {
         }
         Relationships: []
       }
+      chores: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
       equipment: {
         Row: {
           data: Json
@@ -135,6 +156,27 @@ export type Database = {
         Relationships: []
       }
       plan_entries: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      todos: {
         Row: {
           data: Json
           id: string
