@@ -208,6 +208,20 @@ function ChoreRow({
           onChange={(e) => setNotes(e.target.value)}
           aria-label="Note"
         />
+        <select
+          className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm"
+          value={intervalDays ?? ""}
+          onChange={(e) =>
+            setIntervalDays(e.target.value === "" ? undefined : Number(e.target.value))
+          }
+          aria-label="How often it needs doing"
+        >
+          {INTERVAL_OPTIONS.map((o) => (
+            <option key={o.label} value={o.days ?? ""}>
+              Needs doing: {o.label}
+            </option>
+          ))}
+        </select>
         <div className="flex flex-wrap gap-2">
           <Button
             className="h-11"
@@ -215,6 +229,7 @@ function ChoreRow({
               patchChore(chore.id, {
                 name: name.trim() || chore.name,
                 notes: notes.trim() || undefined,
+                intervalDays,
               });
               setEditing(false);
             }}
