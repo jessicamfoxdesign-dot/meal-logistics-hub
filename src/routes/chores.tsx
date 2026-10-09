@@ -154,8 +154,8 @@ function ChoreRow({
   since: string;
   doneToday: boolean;
   onDone: () => void;
-  onUp?: () => void;
-  onDown?: () => void;
+  onUp?: (() => void) | undefined;
+  onDown?: (() => void) | undefined;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(chore.name);
