@@ -184,6 +184,8 @@ export interface Chore {
   /** yyyy-MM-dd; absent = never done */
   lastDone?: string | undefined;
   notes?: string | undefined;
+  /** Roughly how often it needs doing, in days. Sorting weight only — never a deadline. */
+  intervalDays?: number | undefined;
   /** Manual order, used as a tiebreak within the staleness sort. */
   order?: number;
 }
