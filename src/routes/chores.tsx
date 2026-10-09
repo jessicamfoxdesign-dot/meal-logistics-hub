@@ -98,7 +98,7 @@ function ChoresPage() {
   const { data, ready } = useKitchen();
   const today = useToday();
   const [draft, setDraft] = useState("");
-  const sorted = sortChores(data.chores);
+  const sorted = sortChores(data.chores, today);
 
   const add = () => {
     const name = draft.trim();
@@ -107,8 +107,8 @@ function ChoresPage() {
     setDraft("");
   };
 
-  // Moving only swaps with a neighbour that shares the same "last done",
-  // since the staleness sort decides everything else.
+  // Moving only swaps with a neighbour at the same staleness level,
+  // since the ratio sort decides everything else.
   const move = (index: number, dir: -1 | 1) => {
     const ids = sorted.map((c) => c.id);
     const j = index + dir;
@@ -117,7 +117,9 @@ function ChoresPage() {
     reorderChores(ids);
   };
   const canSwap = (i: number, j: number) =>
-    j >= 0 && j < sorted.length && (sorted[i]!.lastDone ?? "") === (sorted[j]!.lastDone ?? "");
+    j >= 0 &&
+    j < sorted.length &&
+    stalenessRatio(sorted[i]!, today) === stalenessRatio(sorted[j]!, today);
 
   return (
     <Shell title="Chores" subtitle="Whatever has gone longest sits at the top.">
