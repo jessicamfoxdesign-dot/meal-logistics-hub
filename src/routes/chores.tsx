@@ -294,6 +294,7 @@ function ChoreRow({
           onClick={() => {
             setName(chore.name);
             setNotes(chore.notes ?? "");
+            setIntervalDays(chore.intervalDays);
             setEditing(true);
           }}
         >
