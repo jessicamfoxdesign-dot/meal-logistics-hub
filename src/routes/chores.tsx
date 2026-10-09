@@ -259,6 +259,9 @@ function ChoreRow({
         <p className="font-medium">{chore.name}</p>
         <p className="text-sm text-muted-foreground">
           {since}
+          {intervalLabel(chore.intervalDays) && chore.intervalDays !== undefined
+            ? ` · ${intervalLabel(chore.intervalDays)}`
+            : null}
           {chore.notes ? <span className="italic"> · {chore.notes}</span> : null}
         </p>
       </div>
