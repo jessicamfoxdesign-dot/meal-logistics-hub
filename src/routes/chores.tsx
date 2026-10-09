@@ -53,14 +53,42 @@ function sinceText(lastDone: string | undefined, today: string) {
   return y === 1 ? "About a year ago" : `${y} years ago`;
 }
 
-/** Never-done first, then oldest lastDone; manual order breaks ties. */
-function sortChores(chores: Chore[]) {
+const INTERVAL_OPTIONS: { days: number | undefined; label: string }[] = [
+  { days: undefined, label: "Not set" },
+  { days: 3, label: "Every few days" },
+  { days: 7, label: "Weekly" },
+  { days: 14, label: "Every 2 weeks" },
+  { days: 30, label: "Monthly" },
+  { days: 91, label: "Every 3 months" },
+  { days: 182, label: "Every 6 months" },
+  { days: 365, label: "Yearly" },
+];
+
+/** Neutral fallback for chores with no interval set. */
+const FALLBACK_INTERVAL = 30;
+
+function intervalLabel(days: number | undefined) {
+  return INTERVAL_OPTIONS.find((o) => o.days === days)?.label;
+}
+
+/**
+ * Sorting weight: how far through its interval the chore is
+ * (days elapsed / interval). Never-done chores sort first.
+ * This is a weight only — never a deadline.
+ */
+function stalenessRatio(c: Chore, today: string) {
+  if (!c.lastDone) return Number.POSITIVE_INFINITY;
+  return daysBetween(c.lastDone, today) / (c.intervalDays ?? FALLBACK_INTERVAL);
+}
+
+/** Highest staleness ratio first; manual order breaks ties. */
+function sortChores(chores: Chore[], today: string) {
   return chores
     .map((c, i) => ({ c, i }))
     .sort((x, y) => {
-      const a = x.c.lastDone ?? "";
-      const b = y.c.lastDone ?? "";
-      if (a !== b) return a < b ? -1 : 1;
+      const ra = stalenessRatio(x.c, today);
+      const rb = stalenessRatio(y.c, today);
+      if (ra !== rb) return rb - ra;
       return (x.c.order ?? x.i) - (y.c.order ?? y.i);
     })
     .map(({ c }) => c);
@@ -70,7 +98,7 @@ function ChoresPage() {
   const { data, ready } = useKitchen();
   const today = useToday();
   const [draft, setDraft] = useState("");
-  const sorted = sortChores(data.chores);
+  const sorted = sortChores(data.chores, today);
 
   const add = () => {
     const name = draft.trim();
@@ -79,8 +107,8 @@ function ChoresPage() {
     setDraft("");
   };
 
-  // Moving only swaps with a neighbour that shares the same "last done",
-  // since the staleness sort decides everything else.
+  // Moving only swaps with a neighbour at the same staleness level,
+  // since the ratio sort decides everything else.
   const move = (index: number, dir: -1 | 1) => {
     const ids = sorted.map((c) => c.id);
     const j = index + dir;
@@ -89,10 +117,12 @@ function ChoresPage() {
     reorderChores(ids);
   };
   const canSwap = (i: number, j: number) =>
-    j >= 0 && j < sorted.length && (sorted[i]!.lastDone ?? "") === (sorted[j]!.lastDone ?? "");
+    j >= 0 &&
+    j < sorted.length &&
+    stalenessRatio(sorted[i]!, today) === stalenessRatio(sorted[j]!, today);
 
   return (
-    <Shell title="Chores" subtitle="Whatever has gone longest sits at the top.">
+    <Shell title="Chores" subtitle="What most needs doing sits at the top.">
       <div className="space-y-5">
         <div className="flex gap-2">
           <Input
@@ -160,6 +190,7 @@ function ChoreRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(chore.name);
   const [notes, setNotes] = useState(chore.notes ?? "");
+  const [intervalDays, setIntervalDays] = useState<number | undefined>(chore.intervalDays);
 
   if (editing) {
     return (
@@ -177,6 +208,20 @@ function ChoreRow({
           onChange={(e) => setNotes(e.target.value)}
           aria-label="Note"
         />
+        <select
+          className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm"
+          value={intervalDays ?? ""}
+          onChange={(e) =>
+            setIntervalDays(e.target.value === "" ? undefined : Number(e.target.value))
+          }
+          aria-label="How often it needs doing"
+        >
+          {INTERVAL_OPTIONS.map((o) => (
+            <option key={o.label} value={o.days ?? ""}>
+              Needs doing: {o.label}
+            </option>
+          ))}
+        </select>
         <div className="flex flex-wrap gap-2">
           <Button
             className="h-11"
@@ -184,6 +229,7 @@ function ChoreRow({
               patchChore(chore.id, {
                 name: name.trim() || chore.name,
                 notes: notes.trim() || undefined,
+                intervalDays,
               });
               setEditing(false);
             }}
@@ -213,6 +259,9 @@ function ChoreRow({
         <p className="font-medium">{chore.name}</p>
         <p className="text-sm text-muted-foreground">
           {since}
+          {intervalLabel(chore.intervalDays) && chore.intervalDays !== undefined
+            ? ` · ${intervalLabel(chore.intervalDays)}`
+            : null}
           {chore.notes ? <span className="italic"> · {chore.notes}</span> : null}
         </p>
       </div>
@@ -245,6 +294,7 @@ function ChoreRow({
           onClick={() => {
             setName(chore.name);
             setNotes(chore.notes ?? "");
+            setIntervalDays(chore.intervalDays);
             setEditing(true);
           }}
         >
