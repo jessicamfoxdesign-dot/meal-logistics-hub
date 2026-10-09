@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Shell } from "@/components/kitchen/Shell";
 import { EmptyNote } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,13 @@ function ChoresPage() {
                 chore={chore}
                 since={sinceText(chore.lastDone, today)}
                 doneToday={chore.lastDone === today}
-                onDone={() => patchChore(chore.id, { lastDone: today })}
+                onDone={() => {
+                  const prev = chore.lastDone;
+                  patchChore(chore.id, { lastDone: today });
+                  toast(`${chore.name} marked done`, {
+                    action: { label: "Undo", onClick: () => patchChore(chore.id, { lastDone: prev }) },
+                  });
+                }}
                 onUp={canSwap(i, i - 1) ? () => move(i, -1) : undefined}
                 onDown={canSwap(i, i + 1) ? () => move(i, 1) : undefined}
               />
