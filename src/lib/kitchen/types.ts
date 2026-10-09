@@ -182,8 +182,8 @@ export interface Chore {
   id: string;
   name: string;
   /** yyyy-MM-dd; absent = never done */
-  lastDone?: string;
-  notes?: string;
+  lastDone?: string | undefined;
+  notes?: string | undefined;
   /** Manual order, used as a tiebreak within the staleness sort. */
   order?: number;
 }
