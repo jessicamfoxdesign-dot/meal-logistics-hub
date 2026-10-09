@@ -14,3 +14,5 @@
 - store.tsx applies edits optimistically, diffs by object identity, and sends writes through an ordered queue that halts and surfaces failures — no edit is ever silently dropped.
 - localStorage `kitchen-plan-v1` (pre-backend data) is read-only forever; the read cache uses `kitchen-plan-cache-v2` — protects un-uploaded device data.
 - Template steps are TemplateStep objects (daysAhead, keeps); normalize.ts upgrades legacy string steps on every read (server, cache, import) — old data never breaks.
+- Phone nav groups the flat lists (Needs, Groceries, To-do) behind one "Lists" tab with a segmented sub-nav in Shell — keeps the bottom bar to two rows.
+- Chores are a staleness list (lastDone only, manual order as tiebreak), never a schedule — no due/overdue concepts by design.
