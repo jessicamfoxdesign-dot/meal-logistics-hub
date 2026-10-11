@@ -280,9 +280,13 @@ function ChoreRow({
                   placeholder="Note, e.g. needs stool (optional)"
                   onChange={(e) =>
                     setSteps(
-                      steps.map((s, j) =>
-                        j === i ? { ...s, constraint: e.target.value || undefined } : s,
-                      ),
+                      steps.map((s, j) => {
+                        if (j !== i) return s;
+                        const { constraint: _c, ...rest } = s;
+                        return e.target.value
+                          ? { ...rest, constraint: e.target.value }
+                          : rest;
+                      }),
                     )
                   }
                   aria-label={`Step ${i + 1} note`}
