@@ -178,6 +178,28 @@ export interface TodoItem {
   today?: boolean;
 }
 
+export type ChorePhase = "setup" | "prep" | "do" | "finish";
+
+export const CHORE_PHASE_LABEL: Record<ChorePhase, string> = {
+  setup: "Setup / retrieve",
+  prep: "Prep / clear",
+  do: "Main work",
+  finish: "Put away / reset",
+};
+
+/**
+ * Optional lightweight constraint note the user authors.
+ * Free text so it stays under user control (no scores or automatic ratings).
+ */
+export type ChoreConstraint = string;
+
+export interface ChoreStep extends TemplateStep {
+  /** Optional phase for grouping. Defaults to "do" if omitted. */
+  phase?: ChorePhase;
+  /** Optional user-authored constraint or cost note. */
+  constraint?: ChoreConstraint;
+}
+
 export interface Chore {
   id: string;
   name: string;
@@ -188,6 +210,19 @@ export interface Chore {
   intervalDays?: number | undefined;
   /** Manual order, used as a tiebreak within the staleness sort. */
   order?: number;
+  /** Optional steps that can be scheduled, deferred, or done across days. */
+  steps?: ChoreStep[];
+  /** Optional top-level constraint note for the whole chore. */
+  constraint?: ChoreConstraint;
+}
+
+export function emptyChoreStep(text = ""): ChoreStep {
+  return {
+    id: crypto.randomUUID(),
+    text,
+    daysAhead: 0,
+    phase: "do",
+  };
 }
 
 export interface KitchenData {
