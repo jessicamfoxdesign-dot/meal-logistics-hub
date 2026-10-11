@@ -341,6 +341,19 @@ function ChoreRow({
             : null}
           {chore.notes ? <span className="italic"> · {chore.notes}</span> : null}
         </p>
+        {chore.steps && chore.steps.length > 0 ? (
+          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+            {chore.steps.map((s) => (
+              <li key={s.id}>
+                · {s.text}
+                <span className="text-xs">
+                  {" "}({CHORE_PHASE_LABEL[s.phase ?? "do"]}
+                  {s.constraint ? ` — ${s.constraint}` : ""})
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
       <div className="flex items-center gap-1">
         <Button
@@ -372,6 +385,7 @@ function ChoreRow({
             setName(chore.name);
             setNotes(chore.notes ?? "");
             setIntervalDays(chore.intervalDays);
+            setSteps(chore.steps ?? []);
             setEditing(true);
           }}
         >
