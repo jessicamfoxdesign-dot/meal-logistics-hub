@@ -15,7 +15,15 @@ import {
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
-import type { Chore } from "@/lib/kitchen/types";
+import {
+  CHORE_PHASE_LABEL,
+  emptyChoreStep,
+  type Chore,
+  type ChorePhase,
+  type ChoreStep,
+} from "@/lib/kitchen/types";
+
+const CHORE_PHASES: ChorePhase[] = ["setup", "prep", "do", "finish"];
 
 export const Route = createFileRoute("/chores")({
   head: () => ({
