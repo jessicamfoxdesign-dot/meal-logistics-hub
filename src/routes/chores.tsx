@@ -15,7 +15,15 @@ import {
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
-import type { Chore } from "@/lib/kitchen/types";
+import {
+  CHORE_PHASE_LABEL,
+  emptyChoreStep,
+  type Chore,
+  type ChorePhase,
+  type ChoreStep,
+} from "@/lib/kitchen/types";
+
+const CHORE_PHASES: ChorePhase[] = ["setup", "prep", "do", "finish"];
 
 export const Route = createFileRoute("/chores")({
   head: () => ({
@@ -191,6 +199,7 @@ function ChoreRow({
   const [name, setName] = useState(chore.name);
   const [notes, setNotes] = useState(chore.notes ?? "");
   const [intervalDays, setIntervalDays] = useState<number | undefined>(chore.intervalDays);
+  const [steps, setSteps] = useState<ChoreStep[]>(chore.steps ?? []);
 
   if (editing) {
     return (
@@ -222,6 +231,77 @@ function ChoreRow({
             </option>
           ))}
         </select>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Steps (optional)</p>
+          {steps.map((step, i) => (
+            <div key={step.id} className="space-y-1 rounded-lg border border-border p-2">
+              <div className="flex gap-2">
+                <Input
+                  className="h-11"
+                  value={step.text}
+                  placeholder="Step"
+                  onChange={(e) =>
+                    setSteps(steps.map((s, j) => (j === i ? { ...s, text: e.target.value } : s)))
+                  }
+                  aria-label={`Step ${i + 1}`}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-11 shrink-0"
+                  aria-label={`Remove step ${i + 1}`}
+                  onClick={() => setSteps(steps.filter((_, j) => j !== i))}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  className="h-11 rounded-md border border-input bg-card px-3 text-sm"
+                  value={step.phase ?? "do"}
+                  onChange={(e) =>
+                    setSteps(
+                      steps.map((s, j) =>
+                        j === i ? { ...s, phase: e.target.value as ChorePhase } : s,
+                      ),
+                    )
+                  }
+                  aria-label={`Step ${i + 1} phase`}
+                >
+                  {CHORE_PHASES.map((p) => (
+                    <option key={p} value={p}>
+                      {CHORE_PHASE_LABEL[p]}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  className="h-11"
+                  value={step.constraint ?? ""}
+                  placeholder="Note, e.g. needs stool (optional)"
+                  onChange={(e) =>
+                    setSteps(
+                      steps.map((s, j) => {
+                        if (j !== i) return s;
+                        const { constraint: _c, ...rest } = s;
+                        return e.target.value
+                          ? { ...rest, constraint: e.target.value }
+                          : rest;
+                      }),
+                    )
+                  }
+                  aria-label={`Step ${i + 1} note`}
+                />
+              </div>
+            </div>
+          ))}
+          <Button
+            variant="outline"
+            className="h-11"
+            onClick={() => setSteps([...steps, emptyChoreStep()])}
+          >
+            <Plus className="size-4" /> Add step
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button
             className="h-11"
@@ -230,6 +310,7 @@ function ChoreRow({
                 name: name.trim() || chore.name,
                 notes: notes.trim() || undefined,
                 intervalDays,
+                steps: steps.filter((s) => s.text.trim()),
               });
               setEditing(false);
             }}
@@ -264,6 +345,19 @@ function ChoreRow({
             : null}
           {chore.notes ? <span className="italic"> · {chore.notes}</span> : null}
         </p>
+        {chore.steps && chore.steps.length > 0 ? (
+          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+            {chore.steps.map((s) => (
+              <li key={s.id}>
+                · {s.text}
+                <span className="text-xs">
+                  {" "}({CHORE_PHASE_LABEL[s.phase ?? "do"]}
+                  {s.constraint ? ` — ${s.constraint}` : ""})
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
       <div className="flex items-center gap-1">
         <Button
@@ -295,6 +389,7 @@ function ChoreRow({
             setName(chore.name);
             setNotes(chore.notes ?? "");
             setIntervalDays(chore.intervalDays);
+            setSteps(chore.steps ?? []);
             setEditing(true);
           }}
         >
