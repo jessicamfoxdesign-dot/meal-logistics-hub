@@ -239,6 +239,7 @@ function ChoreRow({
                 name: name.trim() || chore.name,
                 notes: notes.trim() || undefined,
                 intervalDays,
+                steps: steps.filter((s) => s.text.trim()),
               });
               setEditing(false);
             }}
