@@ -199,6 +199,7 @@ function ChoreRow({
   const [name, setName] = useState(chore.name);
   const [notes, setNotes] = useState(chore.notes ?? "");
   const [intervalDays, setIntervalDays] = useState<number | undefined>(chore.intervalDays);
+  const [steps, setSteps] = useState<ChoreStep[]>(chore.steps ?? []);
 
   if (editing) {
     return (
