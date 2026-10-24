@@ -5,6 +5,7 @@ import { normalizeData } from "./normalize";
 import type {
   Equipment,
   Chore,
+  DateNote,
   GroceryItem,
   KitchenData,
   TodoItem,
@@ -24,7 +25,7 @@ export const LEGACY_KEY = "kitchen-plan-v1";
 const LEGACY_STATUS_KEY = "kitchen-plan-v1-status"; // "uploaded" | "dismissed"
 
 type Collection = keyof KitchenData;
-const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs" | "groceries" | "todos" | "chores"> = {
+const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs" | "groceries" | "todos" | "chores" | "date_notes"> = {
   meals: "meals",
   missions: "missions",
   equipment: "equipment",
@@ -33,6 +34,7 @@ const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entri
   groceries: "groceries",
   todos: "todos",
   chores: "chores",
+  dateNotes: "date_notes",
 };
 const COLLECTIONS = Object.keys(TABLE) as Collection[];
 
@@ -45,6 +47,7 @@ const emptyData: KitchenData = {
   groceries: [],
   todos: [],
   chores: [],
+  dateNotes: [],
 };
 
 export interface SyncState {
@@ -395,6 +398,7 @@ export function parseBackup(text: string): KitchenData {
     ["groceries", ["id", "text"]],
     ["todos", ["id", "text"]],
     ["chores", ["id", "name"]],
+    ["dateNotes", ["id", "date", "text"]],
   ];
   for (const [key, fields] of checks) {
     if (raw[key] === undefined) raw[key] = []; // older backups may lack newer collections
@@ -454,6 +458,7 @@ export function countsOf(d: KitchenData) {
     groceries: d.groceries.length,
     todos: d.todos.length,
     chores: d.chores.length,
+    dateNotes: d.dateNotes.length,
   };
 }
 
@@ -658,6 +663,17 @@ export const saveChore = (chore: Chore) =>
       ? d.chores.map((c) => (c.id === chore.id ? chore : c))
       : [...d.chores, chore],
   }));
+
+export const saveDateNote = (note: DateNote) =>
+  update((d) => ({
+    ...d,
+    dateNotes: d.dateNotes.some((n) => n.id === note.id)
+      ? d.dateNotes.map((n) => (n.id === note.id ? note : n))
+      : [...d.dateNotes, note],
+  }));
+
+export const removeDateNote = (noteId: string) =>
+  update((d) => ({ ...d, dateNotes: d.dateNotes.filter((n) => n.id !== noteId) }));
 
 export const patchChore = (choreId: string, patch: Partial<Chore>) =>
   update((d) => ({
