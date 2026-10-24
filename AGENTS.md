@@ -16,3 +16,4 @@
 - Template steps are TemplateStep objects (daysAhead, keeps); normalize.ts upgrades legacy string steps on every read (server, cache, import) — old data never breaks.
 - Phone nav groups the flat lists (Needs, Groceries, To-do) behind one "Lists" tab with a segmented sub-nav in Shell — keeps the bottom bar to two rows.
 - Chores are a staleness list (lastDone only, manual order as tiebreak), never a schedule — no due/overdue concepts by design.
+- Date notes are independent JSONB rows in date_notes using the shared store queue and allowlist RLS; filtering by their date never changes meal/task scheduling.

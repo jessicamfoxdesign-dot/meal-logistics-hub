@@ -225,6 +225,13 @@ export function emptyChoreStep(text = ""): ChoreStep {
   };
 }
 
+/** Informational text attached only to a calendar date. */
+export interface DateNote {
+  id: string;
+  date: string;
+  text: string;
+}
+
 export interface KitchenData {
   meals: Meal[];
   missions: Mission[];
@@ -234,4 +241,5 @@ export interface KitchenData {
   groceries: GroceryItem[];
   todos: TodoItem[];
   chores: Chore[];
+  dateNotes: DateNote[];
 }

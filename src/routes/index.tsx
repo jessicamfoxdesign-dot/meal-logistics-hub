@@ -4,6 +4,8 @@ import { CalendarDays, CircleAlert, HandHelping, Plus } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { TodoRow } from "@/components/kitchen/TodoRow";
+import { DateNotes } from "@/components/kitchen/DateNotes";
+import { notesForDate } from "@/lib/kitchen/dateNotes";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,8 @@ export const Route = createFileRoute("/")({
           "Your dinner for today, what still needs checking, and the tasks that set up tomorrow.",
       },
       { property: "og:title", content: "Today — Kitchen Plan" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:
@@ -167,6 +171,12 @@ function TodayPage() {
         <EmptyNote>Loading your plan…</EmptyNote>
       ) : (
         <div className="space-y-8">
+          {notesForDate(data.dateNotes, today).length > 0 ? (
+            <section className="space-y-2">
+              <h2 className="text-xl">Notes</h2>
+              <DateNotes date={today} />
+            </section>
+          ) : null}
           {todayEntries.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nothing planned for today.{" "}

@@ -284,5 +284,6 @@ export function buildSeed(today: string, tomorrow: string): KitchenData {
     groceries: [],
     todos: [],
     chores: [],
+    dateNotes: [],
   } as KitchenData;
 }
