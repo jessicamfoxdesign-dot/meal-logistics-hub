@@ -18,11 +18,24 @@ describe("informational date notes", () => {
     expect(notesForDate(notes, "2026-10-31")).toEqual([]);
   });
   test("older data without notes stays compatible", () => {
-    const oldData = { meals: [], missions: [], equipment: [], entries: [], needs: [], groceries: [], todos: [], chores: [] };
+    const oldData = {
+      meals: [],
+      missions: [],
+      equipment: [],
+      entries: [],
+      needs: [],
+      groceries: [],
+      todos: [],
+      chores: [],
+    };
     expect(normalizeData(oldData as KitchenData).dateNotes).toEqual([]);
   });
   test("notes survive backup serialization without affecting entries", () => {
-    const entry = { id: "quiche", date: "2026-10-30", tasks: [{ id: "onions", doDate: "2026-10-29", done: false }] };
+    const entry = {
+      id: "quiche",
+      date: "2026-10-30",
+      tasks: [{ id: "onions", doDate: "2026-10-29", done: false }],
+    };
     const data = { meals: [], missions: [], entries: [entry], dateNotes: notes };
     const roundTrip = normalizeData(JSON.parse(JSON.stringify(data)) as KitchenData);
     expect(roundTrip.dateNotes).toEqual(notes);

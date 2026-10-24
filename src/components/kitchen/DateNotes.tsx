@@ -30,15 +30,35 @@ export function DateNotes({ date, editable = false }: { date: string; editable?:
         <ul className="space-y-1">
           {notes.map((note, index) => (
             <li key={note.id} className="flex items-start gap-1">
-              <p className="min-w-0 flex-1 py-2 text-sm whitespace-pre-wrap break-words">{note.text}</p>
+              <p className="min-w-0 flex-1 py-2 text-sm whitespace-pre-wrap break-words">
+                {note.text}
+              </p>
               {editable ? (
                 <div className="flex shrink-0">
-                  <Button variant="ghost" size="icon" className="size-11" aria-label={`Edit note ${index + 1}`} title="Edit note"
-                    onClick={() => { setEditing(note.id); setText(note.text); }}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11"
+                    aria-label={`Edit note ${index + 1}`}
+                    title="Edit note"
+                    onClick={() => {
+                      setEditing(note.id);
+                      setText(note.text);
+                    }}
+                  >
                     <Pencil className="size-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="size-11" aria-label={`Delete note ${index + 1}`} title="Delete note"
-                    onClick={() => { removeDateNote(note.id); if (editing === note.id) cancel(); }}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11"
+                    aria-label={`Delete note ${index + 1}`}
+                    title="Delete note"
+                    onClick={() => {
+                      removeDateNote(note.id);
+                      if (editing === note.id) cancel();
+                    }}
+                  >
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
@@ -49,14 +69,30 @@ export function DateNotes({ date, editable = false }: { date: string; editable?:
       ) : null}
       {editable && editing !== null ? (
         <form onSubmit={save} className="space-y-2">
-          <Textarea autoFocus aria-label="Date note" value={text} onChange={(event) => setText(event.target.value)} />
+          <Textarea
+            autoFocus
+            aria-label="Date note"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+          />
           <div className="flex gap-2">
-            <Button type="submit" className="h-11" disabled={!text.trim()}>Save note</Button>
-            <Button type="button" variant="ghost" className="h-11" onClick={cancel}>Cancel</Button>
+            <Button type="submit" className="h-11" disabled={!text.trim()}>
+              Save note
+            </Button>
+            <Button type="button" variant="ghost" className="h-11" onClick={cancel}>
+              Cancel
+            </Button>
           </div>
         </form>
       ) : editable ? (
-        <Button variant="ghost" className="h-11 px-2 text-muted-foreground" onClick={() => { setEditing("new"); setText(""); }}>
+        <Button
+          variant="ghost"
+          className="h-11 px-2 text-muted-foreground"
+          onClick={() => {
+            setEditing("new");
+            setText("");
+          }}
+        >
           <Plus className="size-4" /> Add note
         </Button>
       ) : null}
