@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
+import { DateNotes } from "@/components/kitchen/DateNotes";
 import { EmptyNote, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,8 @@ export const Route = createFileRoute("/plan")({
           "A seven-day dinner plan you can rearrange without losing any preparation.",
       },
       { property: "og:title", content: "Plan — Kitchen Plan" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:
@@ -100,6 +103,8 @@ function PlanPage() {
                     ) : null}
                   </h2>
                 </div>
+
+                <DateNotes date={day} editable />
 
                 <ul className="mt-3 space-y-2">
                   {entries.map((entry) => {
