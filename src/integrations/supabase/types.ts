@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      date_notes: {
+        Row: {
+          data: Json
+          id: string
+          seq: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          seq?: never
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          seq?: never
+          updated_at?: string
+        }
+        Relationships: []
+      }
       equipment: {
         Row: {
           data: Json
