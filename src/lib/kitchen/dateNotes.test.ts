@@ -1,4 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "node:test";
+import { deepStrictEqual } from "node:assert";
 import { notesForDate } from "./dateNotes";
 import { normalizeData } from "./normalize";
 import type { DateNote, KitchenData } from "./types";
@@ -11,11 +12,11 @@ const notes: DateNote[] = [
 
 describe("informational date notes", () => {
   test("multiple notes stay on their exact date with text unchanged", () => {
-    expect(notesForDate(notes, "2026-10-28")).toEqual([notes[0], notes[2]]);
-    expect(notesForDate(notes, "2026-10-30")).toEqual([notes[1]]);
+    deepStrictEqual(notesForDate(notes, "2026-10-28"), [notes[0], notes[2]]);
+    deepStrictEqual(notesForDate(notes, "2026-10-30"), [notes[1]]);
   });
   test("earlier notes do not carry forward onto today", () => {
-    expect(notesForDate(notes, "2026-10-31")).toEqual([]);
+    deepStrictEqual(notesForDate(notes, "2026-10-31"), []);
   });
   test("older data without notes stays compatible", () => {
     const oldData = {
@@ -28,7 +29,7 @@ describe("informational date notes", () => {
       todos: [],
       chores: [],
     };
-    expect(normalizeData(oldData as KitchenData).dateNotes).toEqual([]);
+    deepStrictEqual(normalizeData(oldData as unknown as KitchenData).dateNotes, []);
   });
   test("notes survive backup serialization without affecting entries", () => {
     const entry = {
@@ -38,7 +39,7 @@ describe("informational date notes", () => {
     };
     const data = { meals: [], missions: [], entries: [entry], dateNotes: notes };
     const roundTrip = normalizeData(JSON.parse(JSON.stringify(data)) as KitchenData);
-    expect(roundTrip.dateNotes).toEqual(notes);
-    expect(roundTrip.entries).toEqual([entry]);
+    deepStrictEqual(roundTrip.dateNotes, notes);
+    deepStrictEqual(roundTrip.entries, [entry]);
   });
 });
