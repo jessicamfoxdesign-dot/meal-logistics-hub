@@ -7,7 +7,11 @@ import type { KitchenData } from "./types";
 const T = "2026-11-02";
 const base = (): KitchenData =>
   normalizeData({
-    meals: [], missions: [], equipment: [], entries: [], needs: [],
+    meals: [],
+    missions: [],
+    equipment: [],
+    entries: [],
+    needs: [],
     todos: [
       { id: "once", text: "Call radiology", done: false },
       { id: "rep", text: "Paint", done: false, repeatable: true, group: "Art" },
@@ -37,11 +41,17 @@ describe("planned to-dos and chores", () => {
     strictEqual(d.entries.length, 2);
     strictEqual(d.entries[0].done, true);
     // completed earlier session is not carried forward
-    deepStrictEqual(listEntriesForToday(d, T).map((e) => e.date), [T]);
+    deepStrictEqual(
+      listEntriesForToday(d, T).map((e) => e.date),
+      [T],
+    );
   });
   test("unfinished sessions carry forward; unselected items do not appear", () => {
     const d = planListItem(base(), "chore", "tub", "2026-10-30", T).data;
-    deepStrictEqual(listEntriesForToday(d, T).map((e) => e.refId), ["tub"]);
+    deepStrictEqual(
+      listEntriesForToday(d, T).map((e) => e.refId),
+      ["tub"],
+    );
     // re-selecting a carried-forward chore moves it rather than copying
     const d2 = planListItem(d, "chore", "tub", T, T).data;
     strictEqual(d2.entries.length, 1);

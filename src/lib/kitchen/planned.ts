@@ -24,7 +24,10 @@ export function listEntryDone(d: KitchenData, e: PlanEntry): boolean {
 /** Sessions to show on Today: dated today, or earlier and still unfinished. */
 export function listEntriesForToday(d: KitchenData, today: string) {
   return d.entries.filter(
-    (e) => isListEntry(e) && !e.skipped && (e.date === today || (e.date < today && !listEntryDone(d, e))),
+    (e) =>
+      isListEntry(e) &&
+      !e.skipped &&
+      (e.date === today || (e.date < today && !listEntryDone(d, e))),
   );
 }
 
@@ -50,9 +53,7 @@ export function planListItem(
   const sameDay = mine.find((e) => e.date === date && !listEntryDone(d, e));
   if (sameDay) return { data: d, entryId: sameDay.id };
   const oneOff = kind === "todo" && !d.todos.find((t) => t.id === refId)?.repeatable;
-  const movable = mine.find(
-    (e) => !listEntryDone(d, e) && (oneOff || e.date < today),
-  );
+  const movable = mine.find((e) => !listEntryDone(d, e) && (oneOff || e.date < today));
   if (movable) {
     return {
       data: { ...d, entries: d.entries.map((e) => (e === movable ? { ...e, date } : e)) },

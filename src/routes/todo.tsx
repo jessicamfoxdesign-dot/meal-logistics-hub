@@ -6,12 +6,7 @@ import { Shell } from "@/components/kitchen/Shell";
 import { EmptyNote } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  addTodo,
-  clearCompletedTodos,
-  uid,
-  useKitchen,
-} from "@/lib/kitchen/store";
+import { addTodo, clearCompletedTodos, uid, useKitchen } from "@/lib/kitchen/store";
 
 export const Route = createFileRoute("/todo")({
   head: () => ({
@@ -29,7 +24,9 @@ function TodoPage() {
   const { data, ready } = useKitchen();
   const [draft, setDraft] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
-  const groups = [...new Set(data.todos.map((t) => t.group?.trim()).filter(Boolean) as string[])].sort();
+  const groups = [
+    ...new Set(data.todos.map((t) => t.group?.trim()).filter(Boolean) as string[]),
+  ].sort();
 
   const add = () => {
     const text = draft.trim();

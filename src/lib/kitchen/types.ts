@@ -147,7 +147,7 @@ export interface PlanEntry {
   items: PlanItem[];
   tasks: PlanTask[];
   /** Chore sessions only: the chore's lastDone before this session was checked, for undo. */
-  choreLastDoneBefore?: string | null;
+  choreLastDoneBefore?: string | null | undefined;
 }
 
 export interface NeedItem {
@@ -183,9 +183,9 @@ export interface TodoItem {
   /** Manually pinned to the Today page. Never set or cleared automatically. */
   today?: boolean;
   /** Repeatable items can be planned again after a session is finished. Absent = one-off. */
-  repeatable?: boolean;
+  repeatable?: boolean | undefined;
   /** Optional free-text group label, for organizing only. */
-  group?: string;
+  group?: string | undefined;
 }
 
 export type ChorePhase = "setup" | "prep" | "do" | "finish";

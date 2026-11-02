@@ -11,9 +11,7 @@ export function TodoRow({ item, groups = [] }: { item: TodoItem; groups?: string
   const [group, setGroup] = useState(item.group ?? "");
   const meta = [item.group, item.repeatable ? "Repeatable" : ""].filter(Boolean).join(" · ");
   return (
-    <li
-      className={`rounded-xl border border-border bg-card p-3 ${item.done ? "opacity-60" : ""}`}
-    >
+    <li className={`rounded-xl border border-border bg-card p-3 ${item.done ? "opacity-60" : ""}`}>
       <div className="flex items-center gap-3">
         <Checkbox
           checked={item.done}
@@ -60,7 +58,11 @@ export function TodoRow({ item, groups = [] }: { item: TodoItem; groups?: string
       </div>
       {editing ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg border border-border p-0.5" role="group" aria-label="Type">
+          <div
+            className="flex rounded-lg border border-border p-0.5"
+            role="group"
+            aria-label="Type"
+          >
             {([false, true] as const).map((rep) => (
               <Button
                 key={String(rep)}
