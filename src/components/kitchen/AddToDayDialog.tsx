@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   formatDay,
+  planListItemOnDay,
   saveEntry,
   saveMeal,
   saveMission,
@@ -93,7 +94,23 @@ export function AddToDayDialog({
   const missions = data.missions.filter(
     (m) => !m.archived && m.name.toLowerCase().includes(q),
   );
-  const noMatches = q.length > 0 && meals.length === 0 && missions.length === 0;
+  const todos = data.todos.filter(
+    (t) =>
+      !t.done &&
+      (t.text.toLowerCase().includes(q) || (t.group ?? "").toLowerCase().includes(q)),
+  );
+  const chores = data.chores.filter((c) => c.name.toLowerCase().includes(q));
+  const pickList = (kind: "todo" | "chore", id: string) => {
+    planListItemOnDay(kind, id, day);
+    reset();
+    onOpenChange(false);
+  };
+  const noMatches =
+    q.length > 0 &&
+    meals.length === 0 &&
+    missions.length === 0 &&
+    todos.length === 0 &&
+    chores.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={close}>
@@ -143,7 +160,7 @@ export function AddToDayDialog({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search or type a new name"
-                aria-label="Search meals and missions"
+                aria-label="Search meals, missions, to-dos and chores"
               />
             </div>
 
@@ -203,6 +220,45 @@ export function AddToDayDialog({
                           onClick={() => finish(entryFromMission(mission, day))}
                         >
                           {mission.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {todos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">From To-do</p>
+                    <div className="grid gap-2">
+                      {todos.map((t) => (
+                        <Button
+                          key={t.id}
+                          variant="outline"
+                          className="h-auto min-h-12 justify-start whitespace-normal text-left"
+                          onClick={() => pickList("todo", t.id)}
+                        >
+                          <span className="flex-1">{t.text}</span>
+                          {t.group || t.repeatable ? (
+                            <span className="text-xs text-muted-foreground">
+                              {[t.group, t.repeatable ? "Repeatable" : ""].filter(Boolean).join(" · ")}
+                            </span>
+                          ) : null}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {chores.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Chores</p>
+                    <div className="grid gap-2">
+                      {chores.map((c) => (
+                        <Button
+                          key={c.id}
+                          variant="outline"
+                          className="h-auto min-h-12 justify-start whitespace-normal text-left"
+                          onClick={() => pickList("chore", c.id)}
+                        >
+                          {c.name}
                         </Button>
                       ))}
                     </div>
