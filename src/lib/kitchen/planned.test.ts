@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import { strictEqual, deepStrictEqual } from "node:assert";
-import { listEntriesForToday, listEntryDone, planListItem, toggleListEntry } from "./planned";
+import { completeChore, undoCompleteChore, listEntriesForToday, listEntryDone, planListItem, toggleListEntry } from "./planned";
 import { normalizeData } from "./normalize";
 import type { KitchenData } from "./types";
 
@@ -61,6 +61,48 @@ describe("planned to-dos and chores", () => {
     const r = planListItem(base(), "chore", "tub", T, T);
     let d = toggleListEntry(r.data, r.entryId!, T);
     strictEqual(d.chores[0]!.lastDone, T);
+    d = toggleListEntry(d, r.entryId!, T);
+    strictEqual(d.chores[0]!.lastDone, "2026-10-01");
+  });
+});
+
+describe("chore sync between Chores page and Plan", () => {
+  const withSessions = () => {
+    let d = planListItem(base(), "chore", "tub", "2026-10-20", T).data;
+    d = toggleListEntry(d, d.entries[0]!.id, "2026-10-20"); // historical, done
+    d = planListItem(d, "chore", "tub", T, T).data; // pending today
+    d = planListItem(d, "chore", "tub", "2026-11-09", T).data; // future
+    return d;
+  };
+  test("Done on Chores finishes the pending session only", () => {
+    const d0 = withSessions();
+    const pendingId = d0.entries.find((e) => e.date === T)!.id;
+    const r = completeChore(d0, "tub", T);
+    deepStrictEqual(r.sessionIds, [pendingId]);
+    strictEqual(r.data.chores[0]!.lastDone, T);
+    strictEqual(r.data.entries.find((e) => e.date === T)!.done, true);
+    strictEqual(r.data.entries.find((e) => e.date === "2026-11-09")!.done, undefined);
+    strictEqual(r.data.entries.find((e) => e.date === "2026-10-20")!.choreLastDoneSet, "2026-10-20");
+  });
+  test("undo from Chores reopens that session and restores lastDone", () => {
+    const d0 = withSessions();
+    const r = completeChore(d0, "tub", T);
+    const d = undoCompleteChore(r.data, "tub", "2026-10-20", r.sessionIds, T);
+    strictEqual(d.chores[0]!.lastDone, "2026-10-20");
+    strictEqual(d.entries.find((e) => e.date === T)!.done, false);
+    strictEqual(d.entries.find((e) => e.date === "2026-10-20")!.done, true);
+  });
+  test("unchecking an old session cannot roll back a newer lastDone", () => {
+    const d0 = withSessions();
+    const d1 = completeChore(d0, "tub", T).data;
+    const old = d1.entries.find((e) => e.date === "2026-10-20")!;
+    const d = toggleListEntry(d1, old.id, T);
+    strictEqual(d.chores[0]!.lastDone, T);
+    strictEqual(d.entries.find((e) => e.id === old.id)!.done, false);
+  });
+  test("unchecking the latest session still restores the previous date", () => {
+    const r = planListItem(base(), "chore", "tub", T, T);
+    let d = toggleListEntry(r.data, r.entryId!, T);
     d = toggleListEntry(d, r.entryId!, T);
     strictEqual(d.chores[0]!.lastDone, "2026-10-01");
   });

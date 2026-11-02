@@ -1,5 +1,10 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { planListItem as planListItemPure, toggleListEntry as toggleListEntryPure } from "./planned";
+import {
+  completeChore,
+  planListItem as planListItemPure,
+  toggleListEntry as toggleListEntryPure,
+  undoCompleteChore,
+} from "./planned";
 import { supabase } from "@/integrations/supabase/client";
 import { buildSeed } from "./seed";
 import { normalizeData } from "./normalize";
@@ -711,3 +716,16 @@ export const planListItemOnDay = (kind: "todo" | "chore", refId: string, date: s
 
 export const toggleListEntryDone = (entryId: string) =>
   update((d) => toggleListEntryPure(d, entryId, dayKey(new Date())));
+
+/** Done from the Chores page; returns an undo function. */
+export const markChoreDone = (choreId: string) => {
+  const today = dayKey(new Date());
+  const prev = data.chores.find((c) => c.id === choreId)?.lastDone;
+  let sessionIds: string[] = [];
+  update((d) => {
+    const r = completeChore(d, choreId, today);
+    sessionIds = r.sessionIds;
+    return r.data;
+  });
+  return () => update((d) => undoCompleteChore(d, choreId, prev, sessionIds, today));
+};

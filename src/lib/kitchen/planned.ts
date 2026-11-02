@@ -87,20 +87,85 @@ export function toggleListEntry(d: KitchenData, entryId: string, today: string):
     }
     return { ...d, entries: d.entries.map((x) => (x === e ? { ...x, done } : x)) };
   }
-  // Chore: finishing sets lastDone to today; unchecking restores the previous value.
+  // Chore: finishing sets lastDone to today; unchecking restores the previous
+  // value only if nothing newer has set lastDone since.
   const c = d.chores.find((x) => x.id === e.refId);
   const entries = d.entries.map((x) =>
     x === e
       ? done
-        ? { ...x, done: true, choreLastDoneBefore: c?.lastDone ?? null }
-        : { ...x, done: false, choreLastDoneBefore: undefined }
+        ? { ...x, done: true, choreLastDoneBefore: c?.lastDone ?? null, choreLastDoneSet: today }
+        : { ...x, done: false, choreLastDoneBefore: undefined, choreLastDoneSet: undefined }
       : x,
   );
   if (!c) return { ...d, entries };
-  const lastDone = done ? today : (e.choreLastDoneBefore ?? undefined);
+  let lastDone = c.lastDone;
+  if (done) lastDone = today;
+  else if (canRollBack(d, e, c.lastDone)) lastDone = e.choreLastDoneBefore ?? undefined;
   return {
     ...d,
     entries,
     chores: d.chores.map((x) => (x === c ? { ...x, lastDone } : x)),
+  };
+}
+
+/** Roll back lastDone only if this session set the current value and no other completed session also relies on it. */
+function canRollBack(d: KitchenData, e: PlanEntry, current: string | undefined) {
+  if (!e.choreLastDoneSet || e.choreLastDoneSet !== current) return false;
+  return !d.entries.some(
+    (x) => x !== e && x.kind === "chore" && x.refId === e.refId && x.done && x.choreLastDoneSet === current,
+  );
+}
+
+/**
+ * Done pressed on the Chores page: set lastDone to today and finish any
+ * pending planned session (unfinished, dated today or earlier). Future
+ * sessions and already-finished sessions are left alone.
+ */
+export function completeChore(
+  d: KitchenData,
+  choreId: string,
+  today: string,
+): { data: KitchenData; sessionIds: string[] } {
+  const c = d.chores.find((x) => x.id === choreId);
+  if (!c) return { data: d, sessionIds: [] };
+  const sessionIds: string[] = [];
+  const entries = d.entries.map((x) => {
+    if (x.kind !== "chore" || x.refId !== choreId || x.done || x.skipped || x.date > today) return x;
+    sessionIds.push(x.id);
+    return { ...x, done: true, choreLastDoneBefore: c.lastDone ?? null, choreLastDoneSet: today };
+  });
+  return {
+    data: {
+      ...d,
+      entries,
+      chores: d.chores.map((x) => (x === c ? { ...x, lastDone: today } : x)),
+    },
+    sessionIds,
+  };
+}
+
+/** Undo for completeChore: reopen exactly those sessions; restore lastDone only if still the value it set. */
+export function undoCompleteChore(
+  d: KitchenData,
+  choreId: string,
+  prev: string | undefined,
+  sessionIds: string[],
+  today: string,
+): KitchenData {
+  const ids = new Set(sessionIds);
+  const entries = d.entries.map((x) =>
+    ids.has(x.id) && x.done
+      ? { ...x, done: false, choreLastDoneBefore: undefined, choreLastDoneSet: undefined }
+      : x,
+  );
+  const others = entries.some(
+    (x) => x.kind === "chore" && x.refId === choreId && x.done && x.choreLastDoneSet === today,
+  );
+  return {
+    ...d,
+    entries,
+    chores: d.chores.map((x) =>
+      x.id === choreId && x.lastDone === today && !others ? { ...x, lastDone: prev } : x,
+    ),
   };
 }
