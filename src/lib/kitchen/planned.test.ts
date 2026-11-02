@@ -25,7 +25,7 @@ describe("planned to-dos and chores", () => {
     const d = toggleListEntry(r.data, r.entryId!, T);
     strictEqual(d.todos[0]!.done, true);
     strictEqual(d.entries[0]!.done, undefined);
-    strictEqual(listEntryDone(d, d.entries[0]), true);
+    strictEqual(listEntryDone(d, d.entries[0]!), true);
   });
   test("re-planning an unfinished one-off moves it instead of duplicating", () => {
     let d = planListItem(base(), "todo", "once", "2026-11-03", T).data;
