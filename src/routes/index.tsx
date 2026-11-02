@@ -6,6 +6,8 @@ import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { TodoRow } from "@/components/kitchen/TodoRow";
 import { DateNotes } from "@/components/kitchen/DateNotes";
 import { notesForDate } from "@/lib/kitchen/dateNotes";
+import { isListEntry, listEntriesForToday, listEntryDone } from "@/lib/kitchen/planned";
+import { toast } from "sonner";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,10 @@ import {
   dayKey,
   formatDay,
   patchEntry,
+  deleteEntry,
   patchTask,
+  saveEntry,
+  toggleListEntryDone,
   toggleTask,
   useKitchen,
   useToday,
@@ -62,8 +67,11 @@ function TodayPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const todayEntries = data.entries.filter((e) => e.date === today);
-  const tomorrowEntries = data.entries.filter((e) => e.date === tomorrow);
+  const todayEntries = data.entries.filter((e) => e.date === today && !isListEntry(e));
+  const tomorrowEntries = data.entries.filter((e) => e.date === tomorrow && !isListEntry(e));
+  const plannedList = listEntriesForToday(data, today).sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
 
   const taskDay = (e: PlanEntry, t: PlanEntry["tasks"][number]) => t.doDate ?? e.date;
 
@@ -331,6 +339,64 @@ function TodayPage() {
                     onOpen={() => setOpenId(entry.id)}
                   />
                 ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {plannedList.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-xl">To-dos & chores</h2>
+              <ul className="grid gap-2">
+                {plannedList.map((entry) => {
+                  const done = listEntryDone(data, entry);
+                  return (
+                    <li
+                      key={entry.id}
+                      className={`flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3 ${done ? "opacity-60" : ""}`}
+                    >
+                      <Checkbox
+                        checked={done}
+                        onCheckedChange={() => toggleListEntryDone(entry.id)}
+                        className="size-6"
+                        aria-label={entry.title}
+                      />
+                      <div className="min-w-40 flex-1">
+                        <p className={done ? "text-muted-foreground line-through" : ""}>
+                          {entry.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {entry.kind === "chore" ? "Chore" : "To-do"}
+                          {entry.date < today ? (
+                            <span className="font-medium text-attention-foreground">
+                              {" "}· Carried forward from{" "}
+                              {entry.date === addDays(today, -1) ? "yesterday" : formatDay(entry.date)}
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {done ? null : (
+                          <DeferButton
+                            current={entry.date}
+                            onPick={(date) => patchEntry(entry.id, { date })}
+                          />
+                        )}
+                        <Button
+                          variant="ghost"
+                          className="h-11"
+                          onClick={() => {
+                            deleteEntry(entry.id);
+                            toast(`Removed ${entry.title} from the plan`, {
+                              action: { label: "Undo", onClick: () => saveEntry(entry) },
+                            });
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ) : null}
