@@ -17,3 +17,4 @@
 - Phone nav groups the flat lists (Needs, Groceries, To-do) behind one "Lists" tab with a segmented sub-nav in Shell — keeps the bottom bar to two rows.
 - Chores are a staleness list (lastDone only, manual order as tiebreak), never a schedule — no due/overdue concepts by design.
 - Date notes are independent JSONB rows in date_notes using the shared store queue and allowlist RLS; filtering by their date never changes meal/task scheduling.
+- Planned To-do/Chore sessions are PlanEntry rows (kind "todo"/"chore", refId = source); rules live in src/lib/kitchen/planned.ts — one-off completion reads the To-do item, repeatable/chore completion lives on the entry, so state is never duplicated.

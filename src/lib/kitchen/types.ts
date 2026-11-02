@@ -126,7 +126,11 @@ export type EntryKind =
   | "leftovers"
   | "takeout"
   | "open"
-  | "other";
+  | "other"
+  /** A To-do item selected for this day (refId = TodoItem.id). */
+  | "todo"
+  /** A chore selected for this day (refId = Chore.id). */
+  | "chore";
 
 export interface PlanEntry {
   id: string;
@@ -142,6 +146,8 @@ export interface PlanEntry {
   done?: boolean;
   items: PlanItem[];
   tasks: PlanTask[];
+  /** Chore sessions only: the chore's lastDone before this session was checked, for undo. */
+  choreLastDoneBefore?: string | null | undefined;
 }
 
 export interface NeedItem {
@@ -176,6 +182,10 @@ export interface TodoItem {
   done: boolean;
   /** Manually pinned to the Today page. Never set or cleared automatically. */
   today?: boolean;
+  /** Repeatable items can be planned again after a session is finished. Absent = one-off. */
+  repeatable?: boolean | undefined;
+  /** Optional free-text group label, for organizing only. */
+  group?: string | undefined;
 }
 
 export type ChorePhase = "setup" | "prep" | "do" | "finish";

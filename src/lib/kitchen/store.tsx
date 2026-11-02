@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { planListItem as planListItemPure, toggleListEntry as toggleListEntryPure } from "./planned";
 import { supabase } from "@/integrations/supabase/client";
 import { buildSeed } from "./seed";
 import { normalizeData } from "./normalize";
@@ -697,3 +698,16 @@ export const reorderChores = (ids: string[]) =>
 export function useStable<T extends (...args: never[]) => unknown>(fn: T) {
   return useCallback(fn, [fn]);
 }
+
+export const planListItemOnDay = (kind: "todo" | "chore", refId: string, date: string) => {
+  let id: string | null = null;
+  update((d) => {
+    const r = planListItemPure(d, kind, refId, date, dayKey(new Date()));
+    id = r.entryId;
+    return r.data;
+  });
+  return id;
+};
+
+export const toggleListEntryDone = (entryId: string) =>
+  update((d) => toggleListEntryPure(d, entryId, dayKey(new Date())));

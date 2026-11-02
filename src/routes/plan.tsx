@@ -8,12 +8,15 @@ import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { DateNotes } from "@/components/kitchen/DateNotes";
 import { EmptyNote, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { isListEntry, listEntryDone } from "@/lib/kitchen/planned";
 import {
   addDays,
   formatDay,
   deleteEntry,
   patchEntry,
   saveEntry,
+  toggleListEntryDone,
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
@@ -111,6 +114,8 @@ function PlanPage() {
                     const open = entry.items.filter((i) =>
                       !i.setAside && needsAttention(i.status),
                     ).length;
+                    const listItem = isListEntry(entry);
+                    const listDone = listItem && listEntryDone(data, entry);
                     return (
                       <li
                         key={entry.id}
@@ -121,19 +126,35 @@ function PlanPage() {
                         }`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div>
+                          <div className="flex items-start gap-3">
+                            {listItem ? (
+                              <Checkbox
+                                checked={listDone}
+                                onCheckedChange={() => toggleListEntryDone(entry.id)}
+                                className="mt-0.5 size-6"
+                                aria-label={`Done: ${entry.title}`}
+                              />
+                            ) : null}
+                            <div>
                             <p
                               className={`font-medium ${
-                                entry.skipped ? "text-muted-foreground" : ""
-                              }`}
+                                entry.skipped || listDone ? "text-muted-foreground" : ""
+                              } ${listDone ? "line-through" : ""}`}
                             >
                               {entry.title}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {entry.kind === "mission" ? "Mission" : "Dinner"}
+                              {entry.kind === "mission"
+                                ? "Mission"
+                                : entry.kind === "todo"
+                                  ? "To-do"
+                                  : entry.kind === "chore"
+                                    ? "Chore"
+                                    : "Dinner"}
                               {entry.skipped ? " · not today" : ""}
                               {open > 0 ? ` · ${open} to sort out` : ""}
                             </p>
+                            </div>
                           </div>
                           <div className="flex gap-1">
                             <Button
@@ -162,13 +183,15 @@ function PlanPage() {
                             >
                               <ChevronRight className="size-4" />
                             </Button>
-                            <Button
-                              variant="secondary"
-                              className="h-11"
-                              onClick={() => setOpenId(entry.id)}
-                            >
-                              Open
-                            </Button>
+                            {listItem ? null : (
+                              <Button
+                                variant="secondary"
+                                className="h-11"
+                                onClick={() => setOpenId(entry.id)}
+                              >
+                                Open
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="icon"
