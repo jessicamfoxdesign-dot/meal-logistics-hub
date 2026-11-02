@@ -7,6 +7,7 @@ import { EmptyNote } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  markChoreDone,
   patchChore,
   removeChore,
   reorderChores,
@@ -163,10 +164,9 @@ function ChoresPage() {
                 since={sinceText(chore.lastDone, today)}
                 doneToday={chore.lastDone === today}
                 onDone={() => {
-                  const prev = chore.lastDone;
-                  patchChore(chore.id, { lastDone: today });
+                  const undo = markChoreDone(chore.id);
                   toast(`${chore.name} marked done`, {
-                    action: { label: "Undo", onClick: () => patchChore(chore.id, { lastDone: prev }) },
+                    action: { label: "Undo", onClick: undo },
                   });
                 }}
                 onUp={canSwap(i, i - 1) ? () => move(i, -1) : undefined}

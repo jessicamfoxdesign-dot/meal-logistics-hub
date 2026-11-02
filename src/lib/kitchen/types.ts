@@ -148,6 +148,8 @@ export interface PlanEntry {
   tasks: PlanTask[];
   /** Chore sessions only: the chore's lastDone before this session was checked, for undo. */
   choreLastDoneBefore?: string | null | undefined;
+  /** Chore sessions only: the lastDone value this session set (guards undo against newer completions). */
+  choreLastDoneSet?: string | undefined;
 }
 
 export interface NeedItem {
