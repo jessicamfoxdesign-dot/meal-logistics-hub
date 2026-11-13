@@ -4,9 +4,10 @@ import { CalendarDays, CircleAlert, HandHelping, Plus } from "lucide-react";
 import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { TodoRow } from "@/components/kitchen/TodoRow";
+import { PlannedSessionActions } from "@/components/kitchen/PlannedSessionActions";
 import { DateNotes } from "@/components/kitchen/DateNotes";
 import { notesForDate } from "@/lib/kitchen/dateNotes";
-import { isListEntry, listEntriesForToday, listEntryDone } from "@/lib/kitchen/planned";
+import { earlierListEntries, isListEntry, listEntriesForToday, listEntryDone } from "@/lib/kitchen/planned";
 import { toast } from "sonner";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
@@ -22,7 +23,6 @@ import {
   deleteEntry,
   patchTask,
   saveEntry,
-  toggleListEntryDone,
   toggleTask,
   useKitchen,
   useToday,
@@ -66,12 +66,12 @@ function TodayPage() {
   const tomorrow = addDays(today, 1);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [dismissedReviewDay, setDismissedReviewDay] = useState<string | null>(null);
+  const earlier = earlierListEntries(data, today);
 
   const todayEntries = data.entries.filter((e) => e.date === today && !isListEntry(e));
   const tomorrowEntries = data.entries.filter((e) => e.date === tomorrow && !isListEntry(e));
-  const plannedList = listEntriesForToday(data, today).sort((a, b) =>
-    a.date.localeCompare(b.date),
-  );
+  const plannedList = listEntriesForToday(data, today).filter((e) => e.date === today);
 
   const taskDay = (e: PlanEntry, t: PlanEntry["tasks"][number]) => t.doDate ?? e.date;
 
@@ -179,6 +179,30 @@ function TodayPage() {
         <EmptyNote>Loading your plan…</EmptyNote>
       ) : (
         <div className="space-y-8">
+          {earlier.length > 0 ? (
+            <section className="space-y-3" aria-label="Morning review">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xl">Morning review</h2>
+                <Button variant="ghost" className="h-11" aria-expanded={dismissedReviewDay !== today}
+                  onClick={() => setDismissedReviewDay(dismissedReviewDay === today ? null : today)}>
+                  {dismissedReviewDay === today ? "Show earlier work" : "Dismiss"}
+                </Button>
+              </div>
+              {dismissedReviewDay !== today ? (
+                <ul className="grid gap-2">
+                  {earlier.map((entry) => (
+                    <li key={entry.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words">{entry.title}</p>
+                        <p className="text-xs text-muted-foreground">{formatDay(entry.date)}</p>
+                      </div>
+                      <PlannedSessionActions entry={entry} done={false} />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ) : null}
           {notesForDate(data.dateNotes, today).length > 0 ? (
             <section className="space-y-2">
               <h2 className="text-xl">Notes</h2>
@@ -354,12 +378,6 @@ function TodayPage() {
                       key={entry.id}
                       className={`flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3 ${done ? "opacity-60" : ""}`}
                     >
-                      <Checkbox
-                        checked={done}
-                        onCheckedChange={() => toggleListEntryDone(entry.id)}
-                        className="size-6"
-                        aria-label={entry.title}
-                      />
                       <div className="min-w-40 flex-1">
                         <p className={done ? "text-muted-foreground line-through" : ""}>
                           {entry.title}
@@ -375,12 +393,7 @@ function TodayPage() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        {done ? null : (
-                          <DeferButton
-                            current={entry.date}
-                            onPick={(date) => patchEntry(entry.id, { date })}
-                          />
-                        )}
+                        <PlannedSessionActions entry={entry} done={done} />
                         <Button
                           variant="ghost"
                           className="h-11"

@@ -6,9 +6,9 @@ import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { DateNotes } from "@/components/kitchen/DateNotes";
+import { PlannedSessionActions } from "@/components/kitchen/PlannedSessionActions";
 import { EmptyNote, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { isListEntry, listEntryDone } from "@/lib/kitchen/planned";
 import {
   addDays,
@@ -16,7 +16,6 @@ import {
   deleteEntry,
   patchEntry,
   saveEntry,
-  toggleListEntryDone,
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
@@ -127,14 +126,6 @@ function PlanPage() {
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div className="flex items-start gap-3">
-                            {listItem ? (
-                              <Checkbox
-                                checked={listDone}
-                                onCheckedChange={() => toggleListEntryDone(entry.id)}
-                                className="mt-0.5 size-6"
-                                aria-label={`Done: ${entry.title}`}
-                              />
-                            ) : null}
                             <div>
                             <p
                               className={`font-medium ${
@@ -151,12 +142,13 @@ function PlanPage() {
                                   : entry.kind === "chore"
                                     ? "Chore"
                                     : "Dinner"}
-                              {entry.skipped ? " · not today" : ""}
+                              {entry.skipped ? (listItem ? " · Skipped" : " · not today") : ""}
                               {open > 0 ? ` · ${open} to sort out` : ""}
                             </p>
                             </div>
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex flex-wrap gap-1">
+                            {listItem ? <PlannedSessionActions entry={entry} done={listDone} /> : null}
                             <Button
                               variant="outline"
                               size="icon"
