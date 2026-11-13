@@ -6,13 +6,7 @@ import { EmptyNote } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  addNeed,
-  removeNeed,
-  toggleNeed,
-  uid,
-  useKitchen,
-} from "@/lib/kitchen/store";
+import { addNeed, removeNeed, toggleNeed, uid, useKitchen } from "@/lib/kitchen/store";
 
 export const Route = createFileRoute("/needs")({
   head: () => ({
@@ -84,15 +78,11 @@ function NeedsPage() {
                   aria-label={need.text}
                 />
                 <div className="flex-1">
-                  <p
-                    className={need.done ? "text-muted-foreground line-through" : ""}
-                  >
+                  <p className={need.done ? "text-muted-foreground line-through" : ""}>
                     {need.text}
                   </p>
                   {need.sourceLabel ? (
-                    <p className="text-xs text-muted-foreground">
-                      for {need.sourceLabel}
-                    </p>
+                    <p className="text-xs text-muted-foreground">for {need.sourceLabel}</p>
                   ) : null}
                 </div>
                 <Button

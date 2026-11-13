@@ -15,12 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  deleteEquipment,
-  saveEquipment,
-  uid,
-  useKitchen,
-} from "@/lib/kitchen/store";
+import { deleteEquipment, saveEquipment, uid, useKitchen } from "@/lib/kitchen/store";
 import {
   EQUIPMENT_CATEGORY_LABEL,
   type Equipment,
@@ -113,9 +108,7 @@ function EquipmentPage() {
                         ) : null}
                       </div>
                       {eq.notes ? (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {eq.notes}
-                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">{eq.notes}</p>
                       ) : null}
                       {eq.related.length > 0 ? (
                         <p className="mt-2 text-sm text-muted-foreground">

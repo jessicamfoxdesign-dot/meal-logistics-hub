@@ -87,14 +87,14 @@ function SettingsPage() {
         <section className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-xl">Backup</h2>
           <p className="max-w-prose text-sm text-muted-foreground">
-            Your kitchen plan is saved online and shared across your devices. A backup file is
-            extra peace of mind.
+            Your kitchen plan is saved online and shared across your devices. A backup file is extra
+            peace of mind.
           </p>
           <p className="text-sm text-muted-foreground">
             Currently: {data.meals.length} meals · {data.missions.length} missions ·{" "}
             {data.equipment.length} equipment · {data.entries.length} plan entries ·{" "}
-            {data.needs.length} needs · {data.groceries.length} groceries ·{" "}
-            {data.todos.length} to-dos · {data.chores.length} chores
+            {data.needs.length} needs · {data.groceries.length} groceries · {data.todos.length}{" "}
+            to-dos · {data.chores.length} chores
           </p>
           <div className="flex flex-wrap gap-2">
             <Button className="h-11" onClick={doExport}>
@@ -130,8 +130,8 @@ function SettingsPage() {
         <section className="space-y-3 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-xl">Start over</h2>
           <p className="max-w-prose text-sm text-muted-foreground">
-            Replace everything — for everyone with access — with the original sample meals,
-            missions and equipment.
+            Replace everything — for everyone with access — with the original sample meals, missions
+            and equipment.
           </p>
           <Button variant="outline" className="h-11" onClick={() => setConfirmReset(true)}>
             <RotateCcw className="size-4" /> Reset to samples
@@ -144,10 +144,9 @@ function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Replace your current data?</AlertDialogTitle>
             <AlertDialogDescription>
-              This backup has {pending?.meals.length} meals, {pending?.missions.length}{" "}
-              missions, {pending?.equipment.length} equipment items and{" "}
-              {pending?.entries.length} plan entries. Your current data will be replaced.
-              Consider exporting first.
+              This backup has {pending?.meals.length} meals, {pending?.missions.length} missions,{" "}
+              {pending?.equipment.length} equipment items and {pending?.entries.length} plan
+              entries. Your current data will be replaced. Consider exporting first.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -228,8 +227,8 @@ function LocalCopySection() {
         {c
           ? ` (${c.meals} meals, ${c.missions} missions, ${c.equipment} equipment, ${c.entries} plan entries, ${c.needs} needs)`
           : ""}
-        . It was not merged into the shared plan. Download it so nothing is lost — you can
-        import it later if you want it back.
+        . It was not merged into the shared plan. Download it so nothing is lost — you can import it
+        later if you want it back.
       </p>
       <Button
         className="h-11"
@@ -251,10 +250,7 @@ function SharingSection() {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data, error } = await supabase
-      .from("allowed_emails")
-      .select("email")
-      .order("added_at");
+    const { data, error } = await supabase.from("allowed_emails").select("email").order("added_at");
     if (error) setError("Couldn't load the list.");
     else setEmails((data ?? []).map((r) => r.email));
   };
@@ -273,7 +269,9 @@ function SharingSection() {
     const { error } = await supabase.from("allowed_emails").insert({ email });
     setBusy(false);
     if (error) {
-      setError(error.code === "23505" ? "That address already has access." : "Couldn't add that address.");
+      setError(
+        error.code === "23505" ? "That address already has access." : "Couldn't add that address.",
+      );
       return;
     }
     setValue("");

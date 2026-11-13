@@ -33,7 +33,18 @@ export const LEGACY_KEY = "kitchen-plan-v1";
 const LEGACY_STATUS_KEY = "kitchen-plan-v1-status"; // "uploaded" | "dismissed"
 
 type Collection = keyof KitchenData;
-const TABLE: Record<Collection, "meals" | "missions" | "equipment" | "plan_entries" | "needs" | "groceries" | "todos" | "chores" | "date_notes"> = {
+const TABLE: Record<
+  Collection,
+  | "meals"
+  | "missions"
+  | "equipment"
+  | "plan_entries"
+  | "needs"
+  | "groceries"
+  | "todos"
+  | "chores"
+  | "date_notes"
+> = {
   meals: "meals",
   missions: "missions",
   equipment: "equipment",
@@ -301,9 +312,7 @@ export function update(fn: (d: KitchenData) => KitchenData) {
   for (const c of COLLECTIONS) {
     if (prev[c] === next[c]) continue;
     const before = new Map<string, unknown>(prev[c].map((x) => [x.id, x]));
-    const changed = (next[c] as { id: string }[]).filter(
-      (x) => before.get(x.id) !== x,
-    );
+    const changed = (next[c] as { id: string }[]).filter((x) => before.get(x.id) !== x);
     const keep = new Set(next[c].map((x) => x.id));
     const removed = prev[c].map((x) => x.id).filter((id) => !keep.has(id));
     enqueue(async () => {
@@ -380,8 +389,7 @@ export function useToday() {
   return today;
 }
 
-export const uid = () =>
-  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+export const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 export function resetToSamples() {
   const today = dayKey(new Date());
@@ -397,8 +405,7 @@ export function exportJson() {
 const isObj = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 const allHave = (arr: unknown, keys: string[]) =>
-  Array.isArray(arr) &&
-  arr.every((x) => isObj(x) && keys.every((k) => typeof x[k] === "string"));
+  Array.isArray(arr) && arr.every((x) => isObj(x) && keys.every((k) => typeof x[k] === "string"));
 
 /** Returns parsed data or throws an Error with a friendly message. Never touches stored data. */
 export function parseBackup(text: string): KitchenData {
@@ -556,9 +563,7 @@ export const toggleTask = (entryId: string, taskId: string) =>
       e.id === entryId
         ? {
             ...e,
-            tasks: e.tasks.map((t) =>
-              t.id === taskId ? { ...t, done: !t.done } : t,
-            ),
+            tasks: e.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
           }
         : e,
     ),
@@ -585,9 +590,7 @@ export const removeTask = (entryId: string, taskId: string) =>
   update((d) => ({
     ...d,
     entries: d.entries.map((e) =>
-      e.id === entryId
-        ? { ...e, tasks: e.tasks.filter((t) => t.id !== taskId) }
-        : e,
+      e.id === entryId ? { ...e, tasks: e.tasks.filter((t) => t.id !== taskId) } : e,
     ),
   }));
 
@@ -612,14 +615,11 @@ export const removeItem = (entryId: string, itemId: string) =>
   update((d) => ({
     ...d,
     entries: d.entries.map((e) =>
-      e.id === entryId
-        ? { ...e, items: e.items.filter((i) => i.id !== itemId) }
-        : e,
+      e.id === entryId ? { ...e, items: e.items.filter((i) => i.id !== itemId) } : e,
     ),
   }));
 
-export const addNeed = (need: NeedItem) =>
-  update((d) => ({ ...d, needs: [...d.needs, need] }));
+export const addNeed = (need: NeedItem) => update((d) => ({ ...d, needs: [...d.needs, need] }));
 
 export const toggleNeed = (needId: string) =>
   update((d) => ({
@@ -636,17 +636,13 @@ export const addGrocery = (item: GroceryItem) =>
 export const toggleGrocery = (itemId: string) =>
   update((d) => ({
     ...d,
-    groceries: d.groceries.map((g) =>
-      g.id === itemId ? { ...g, done: !g.done } : g,
-    ),
+    groceries: d.groceries.map((g) => (g.id === itemId ? { ...g, done: !g.done } : g)),
   }));
 
 export const patchGrocery = (itemId: string, patch: Partial<GroceryItem>) =>
   update((d) => ({
     ...d,
-    groceries: d.groceries.map((g) =>
-      g.id === itemId ? { ...g, ...patch } : g,
-    ),
+    groceries: d.groceries.map((g) => (g.id === itemId ? { ...g, ...patch } : g)),
   }));
 
 export const removeGrocery = (itemId: string) =>
@@ -655,8 +651,7 @@ export const removeGrocery = (itemId: string) =>
 export const clearCheckedGroceries = () =>
   update((d) => ({ ...d, groceries: d.groceries.filter((g) => !g.done) }));
 
-export const addTodo = (item: TodoItem) =>
-  update((d) => ({ ...d, todos: [...d.todos, item] }));
+export const addTodo = (item: TodoItem) => update((d) => ({ ...d, todos: [...d.todos, item] }));
 
 export const patchTodo = (itemId: string, patch: Partial<TodoItem>) =>
   update((d) => ({
@@ -752,10 +747,16 @@ export const markChoreDone = (choreId: string) => {
     return r.data;
   });
   const completedChore = data.chores.find((c) => c.id === choreId);
-  return () => update((d) => undoCompleteChore(
-    d, choreId,
-    d.chores.find((c) => c.id === choreId) === completedChore
-      ? prev : d.chores.find((c) => c.id === choreId)?.lastDone,
-    sessionIds, today,
-  ));
+  return () =>
+    update((d) =>
+      undoCompleteChore(
+        d,
+        choreId,
+        d.chores.find((c) => c.id === choreId) === completedChore
+          ? prev
+          : d.chores.find((c) => c.id === choreId)?.lastDone,
+        sessionIds,
+        today,
+      ),
+    );
 };

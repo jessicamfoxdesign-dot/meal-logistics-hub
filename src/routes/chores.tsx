@@ -285,9 +285,7 @@ function ChoreRow({
                       steps.map((s, j) => {
                         if (j !== i) return s;
                         const { constraint: _c, ...rest } = s;
-                        return e.target.value
-                          ? { ...rest, constraint: e.target.value }
-                          : rest;
+                        return e.target.value ? { ...rest, constraint: e.target.value } : rest;
                       }),
                     )
                   }
@@ -353,7 +351,8 @@ function ChoreRow({
               <li key={s.id}>
                 · {s.text}
                 <span className="text-xs">
-                  {" "}({CHORE_PHASE_LABEL[s.phase ?? "do"]}
+                  {" "}
+                  ({CHORE_PHASE_LABEL[s.phase ?? "do"]}
                   {s.constraint ? ` — ${s.constraint}` : ""})
                 </span>
               </li>

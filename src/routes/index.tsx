@@ -7,7 +7,12 @@ import { TodoRow } from "@/components/kitchen/TodoRow";
 import { PlannedSessionActions } from "@/components/kitchen/PlannedSessionActions";
 import { DateNotes } from "@/components/kitchen/DateNotes";
 import { notesForDate } from "@/lib/kitchen/dateNotes";
-import { earlierListEntries, isListEntry, listEntriesForToday, listEntryDone } from "@/lib/kitchen/planned";
+import {
+  earlierListEntries,
+  isListEntry,
+  listEntriesForToday,
+  listEntryDone,
+} from "@/lib/kitchen/planned";
 import { toast } from "sonner";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { EmptyNote, StatusBadge, needsAttention } from "@/components/kitchen/bits";
@@ -84,9 +89,7 @@ function TodayPage() {
   const todayTasks = data.entries.flatMap((e) =>
     e.skipped || e.done
       ? []
-      : e.tasks
-          .filter((t) => !t.setAside && isOnToday(e, t))
-          .map((t) => ({ entry: e, task: t })),
+      : e.tasks.filter((t) => !t.setAside && isOnToday(e, t)).map((t) => ({ entry: e, task: t })),
   );
 
   // Tasks belonging to other days' entries go to "Sets up a later day";
@@ -183,15 +186,22 @@ function TodayPage() {
             <section className="space-y-3" aria-label="Morning review">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xl">Morning review</h2>
-                <Button variant="ghost" className="h-11" aria-expanded={dismissedReviewDay !== today}
-                  onClick={() => setDismissedReviewDay(dismissedReviewDay === today ? null : today)}>
+                <Button
+                  variant="ghost"
+                  className="h-11"
+                  aria-expanded={dismissedReviewDay !== today}
+                  onClick={() => setDismissedReviewDay(dismissedReviewDay === today ? null : today)}
+                >
                   {dismissedReviewDay === today ? "Show earlier work" : "Dismiss"}
                 </Button>
               </div>
               {dismissedReviewDay !== today ? (
                 <ul className="grid gap-2">
                   {earlier.map((entry) => (
-                    <li key={entry.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
+                    <li
+                      key={entry.id}
+                      className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3"
+                    >
                       <div className="min-w-0 flex-1">
                         <p className="break-words">{entry.title}</p>
                         <p className="text-xs text-muted-foreground">{formatDay(entry.date)}</p>
@@ -237,9 +247,7 @@ function TodayPage() {
                           {entry.kind === "mission" ? "Mission" : "Dinner"}
                           {entry.prepared ? " · Already made" : ""}
                         </p>
-                        <h3
-                          className={`text-2xl ${entry.done ? "line-through" : ""}`}
-                        >
+                        <h3 className={`text-2xl ${entry.done ? "line-through" : ""}`}>
                           {entry.title}
                         </h3>
                         {entry.skipped ? (
@@ -386,8 +394,11 @@ function TodayPage() {
                           {entry.kind === "chore" ? "Chore" : "To-do"}
                           {entry.date < today ? (
                             <span className="font-medium text-attention-foreground">
-                              {" "}· Carried forward from{" "}
-                              {entry.date === addDays(today, -1) ? "yesterday" : formatDay(entry.date)}
+                              {" "}
+                              · Carried forward from{" "}
+                              {entry.date === addDays(today, -1)
+                                ? "yesterday"
+                                : formatDay(entry.date)}
                             </span>
                           ) : null}
                         </p>
@@ -451,7 +462,9 @@ function TodayPage() {
               <h2 className="text-xl">Tomorrow</h2>
               <ul className="grid gap-2">
                 {tomorrowEntries.map((entry) => {
-                  const open = entry.items.filter((i) => !i.setAside && needsAttention(i.status)).length;
+                  const open = entry.items.filter(
+                    (i) => !i.setAside && needsAttention(i.status),
+                  ).length;
                   return (
                     <li
                       key={entry.id}

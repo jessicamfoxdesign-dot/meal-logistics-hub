@@ -22,11 +22,7 @@ import {
   uid,
   useKitchen,
 } from "@/lib/kitchen/store";
-import {
-  GROCERY_GROUP_LABEL,
-  GROCERY_GROUPS,
-  categoryOf,
-} from "@/lib/kitchen/groceryGroups";
+import { GROCERY_GROUP_LABEL, GROCERY_GROUPS, categoryOf } from "@/lib/kitchen/groceryGroups";
 import type { GroceryCategory, GroceryItem } from "@/lib/kitchen/types";
 
 export const Route = createFileRoute("/grocery")({
@@ -62,18 +58,12 @@ function GroceryRow({ item }: { item: GroceryItem }) {
         className="size-6"
         aria-label={item.text}
       />
-      <p
-        className={`flex-1 ${
-          item.done ? "text-muted-foreground line-through" : ""
-        }`}
-      >
+      <p className={`flex-1 ${item.done ? "text-muted-foreground line-through" : ""}`}>
         {item.text}
       </p>
       <Select
         value={categoryOf(item)}
-        onValueChange={(v) =>
-          patchGrocery(item.id, { category: v as GroceryCategory })
-        }
+        onValueChange={(v) => patchGrocery(item.id, { category: v as GroceryCategory })}
       >
         <SelectTrigger
           className="h-11 w-auto min-w-28 text-xs text-muted-foreground"
@@ -121,10 +111,7 @@ function GroceryPage() {
   })).filter((x) => x.items.length > 0);
 
   return (
-    <Shell
-      title="Grocery List"
-      subtitle="Type it, hand over the phone, check it off."
-    >
+    <Shell title="Grocery List" subtitle="Type it, hand over the phone, check it off.">
       <div className="space-y-5">
         <div className="flex gap-2">
           <Input
@@ -173,13 +160,8 @@ function GroceryPage() {
                     <GroceryRow key={item.id} item={item} />
                   ))}
                 </ul>
-                <Button
-                  variant="outline"
-                  className="h-12 w-full"
-                  onClick={clearCheckedGroceries}
-                >
-                  Clear {checked.length} checked{" "}
-                  {checked.length === 1 ? "item" : "items"}
+                <Button variant="outline" className="h-12 w-full" onClick={clearCheckedGroceries}>
+                  Clear {checked.length} checked {checked.length === 1 ? "item" : "items"}
                 </Button>
               </section>
             ) : null}

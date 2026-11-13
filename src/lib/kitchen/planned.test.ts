@@ -1,6 +1,15 @@
 import { describe, test } from "node:test";
 import { strictEqual, deepStrictEqual } from "node:assert";
-import { chooseListEntry, earlierListEntries, completeChore, undoCompleteChore, listEntriesForToday, listEntryDone, planListItem, toggleListEntry } from "./planned";
+import {
+  chooseListEntry,
+  earlierListEntries,
+  completeChore,
+  undoCompleteChore,
+  listEntriesForToday,
+  listEntryDone,
+  planListItem,
+  toggleListEntry,
+} from "./planned";
 import { normalizeData } from "./normalize";
 import type { KitchenData } from "./types";
 
@@ -29,8 +38,13 @@ describe("morning review choices", () => {
   test("multiple missed days aggregate original selections without unselected sources", () => {
     const r = selected("todo", "rep");
     const d = planListItem(r.data, "chore", "tub", "2026-10-28", T).data;
-    deepStrictEqual(earlierListEntries(d, "2026-11-13").map(e => [e.refId, e.date]),
-      [["tub", "2026-10-28"], ["rep", previous]]);
+    deepStrictEqual(
+      earlierListEntries(d, "2026-11-13").map((e) => [e.refId, e.date]),
+      [
+        ["tub", "2026-10-28"],
+        ["rep", previous],
+      ],
+    );
     strictEqual(earlierListEntries(d, previous).length, 1);
     strictEqual(earlierListEntries(d, T).length, 2);
   });
@@ -50,7 +64,13 @@ describe("morning review choices", () => {
     const d = planListItem(r.data, "todo", "rep", "2026-11-09", previous).data;
     const skipped = chooseListEntry(d, r.id, { kind: "skip" }, T);
     strictEqual(earlierListEntries(skipped.data, T).length, 0);
-    strictEqual(listEntryDone(skipped.data, skipped.data.entries[0] as NonNullable<typeof skipped.data.entries[0]>), false);
+    strictEqual(
+      listEntryDone(
+        skipped.data,
+        skipped.data.entries[0] as NonNullable<(typeof skipped.data.entries)[0]>,
+      ),
+      false,
+    );
     strictEqual(skipped.data.todos[1]?.done, false);
     strictEqual(skipped.data.entries[1], d.entries[1]);
     strictEqual(skipped.undo(skipped.data).entries[0]?.skipped, false);
@@ -77,7 +97,7 @@ describe("morning review choices", () => {
       const r = selected("todo", ref);
       const done = chooseListEntry(r.data, r.id, { kind: "done" }, T);
       strictEqual(earlierListEntries(done.data, T).length, 0);
-      strictEqual(done.data.todos.find(t => t.id === ref)?.done, ref === "once");
+      strictEqual(done.data.todos.find((t) => t.id === ref)?.done, ref === "once");
       strictEqual(earlierListEntries(done.undo(done.data), T).length, 1);
     }
   });
@@ -102,7 +122,11 @@ describe("morning review choices", () => {
   });
   test("old persisted entries and all choices survive normalization and JSON reload", () => {
     const r = selected("chore", "tub");
-    for (const choice of [{ kind: "skip" }, { kind: "done" }, { kind: "move", date: "2026-11-09" }] as const) {
+    for (const choice of [
+      { kind: "skip" },
+      { kind: "done" },
+      { kind: "move", date: "2026-11-09" },
+    ] as const) {
       const next = chooseListEntry(r.data, r.id, choice, T).data;
       const loaded = normalizeData(JSON.parse(JSON.stringify(next)));
       deepStrictEqual(loaded, next);
@@ -175,7 +199,10 @@ describe("chore sync between Chores page and Plan", () => {
     strictEqual(r.data.chores[0]!.lastDone, T);
     strictEqual(r.data.entries.find((e) => e.date === T)!.done, true);
     strictEqual(r.data.entries.find((e) => e.date === "2026-11-09")!.done, undefined);
-    strictEqual(r.data.entries.find((e) => e.date === "2026-10-20")!.choreLastDoneSet, "2026-10-20");
+    strictEqual(
+      r.data.entries.find((e) => e.date === "2026-10-20")!.choreLastDoneSet,
+      "2026-10-20",
+    );
   });
   test("undo from Chores reopens that session and restores lastDone", () => {
     const d0 = withSessions();

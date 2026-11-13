@@ -35,11 +35,19 @@ export type ListChoice = { kind: "done" } | { kind: "skip" } | { kind: "move"; d
 export function chooseListEntry(d: KitchenData, id: string, choice: ListChoice, today: string) {
   const before = d.entries.find((e) => e.id === id);
   if (!before || !isListEntry(before)) return { data: d, undo: (current: KitchenData) => current };
-  const next = choice.kind === "done"
-    ? toggleListEntry(d, id, today)
-    : { ...d, entries: d.entries.map((e) => e === before
-      ? choice.kind === "skip" ? { ...e, skipped: true } : { ...e, date: choice.date, skipped: false }
-      : e) };
+  const next =
+    choice.kind === "done"
+      ? toggleListEntry(d, id, today)
+      : {
+          ...d,
+          entries: d.entries.map((e) =>
+            e === before
+              ? choice.kind === "skip"
+                ? { ...e, skipped: true }
+                : { ...e, date: choice.date, skipped: false }
+              : e,
+          ),
+        };
   const after = next.entries.find((e) => e.id === id);
   const todoAfter = next.todos.find((t) => t.id === before.refId);
   return {
@@ -47,11 +55,15 @@ export function chooseListEntry(d: KitchenData, id: string, choice: ListChoice, 
     undo: (current: KitchenData): KitchenData => {
       if (current.entries.find((e) => e.id === id) !== after) return current;
       if (choice.kind === "done") {
-        if (before.kind === "todo" && !todoAfter?.repeatable &&
-          current.todos.find((t) => t.id === before.refId) !== todoAfter) return current;
+        if (
+          before.kind === "todo" &&
+          !todoAfter?.repeatable &&
+          current.todos.find((t) => t.id === before.refId) !== todoAfter
+        )
+          return current;
         return toggleListEntry(current, id, today);
       }
-      return { ...current, entries: current.entries.map((e) => e.id === id ? before : e) };
+      return { ...current, entries: current.entries.map((e) => (e.id === id ? before : e)) };
     },
   };
 }
@@ -147,7 +159,12 @@ export function toggleListEntry(d: KitchenData, entryId: string, today: string):
 function canRollBack(d: KitchenData, e: PlanEntry, current: string | undefined) {
   if (!e.choreLastDoneSet || e.choreLastDoneSet !== current) return false;
   return !d.entries.some(
-    (x) => x !== e && x.kind === "chore" && x.refId === e.refId && x.done && x.choreLastDoneSet === current,
+    (x) =>
+      x !== e &&
+      x.kind === "chore" &&
+      x.refId === e.refId &&
+      x.done &&
+      x.choreLastDoneSet === current,
   );
 }
 
@@ -165,16 +182,21 @@ export function completeChore(
   if (!c) return { data: d, sessionIds: [] };
   const sessionIds: string[] = [];
   const entries = d.entries.map((x) => {
-    if (x.kind !== "chore" || x.refId !== choreId || x.done || x.skipped || x.date > today) return x;
+    if (x.kind !== "chore" || x.refId !== choreId || x.done || x.skipped || x.date > today)
+      return x;
     sessionIds.push(x.id);
     return { ...x, done: true, choreLastDoneBefore: c.lastDone ?? null, choreLastDoneSet: today };
   });
   // A separate Done on the same date is still a newer actual completion.
   // Earlier sessions must no longer be able to undo that completion.
   const protectedEntries = entries.map((x) =>
-    x.kind === "chore" && x.refId === choreId && x.done &&
-    x.choreLastDoneSet === today && !sessionIds.includes(x.id)
-      ? { ...x, choreLastDoneSet: undefined } : x,
+    x.kind === "chore" &&
+    x.refId === choreId &&
+    x.done &&
+    x.choreLastDoneSet === today &&
+    !sessionIds.includes(x.id)
+      ? { ...x, choreLastDoneSet: undefined }
+      : x,
   );
   return {
     data: {

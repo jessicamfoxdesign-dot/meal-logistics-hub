@@ -15,12 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  deleteMission,
-  saveMission,
-  uid,
-  useKitchen,
-} from "@/lib/kitchen/store";
+import { deleteMission, saveMission, uid, useKitchen } from "@/lib/kitchen/store";
 import { emptyMission } from "@/lib/kitchen/create";
 import type { Mission } from "@/lib/kitchen/types";
 
@@ -52,9 +47,7 @@ function MissionsPage() {
   const [showArchived, setShowArchived] = useState(false);
 
   const missions = data.missions.filter((m) => m.archived === showArchived);
-  const helpNames = new Set(
-    data.equipment.filter((e) => e.helpNeeded).map((e) => e.name),
-  );
+  const helpNames = new Set(data.equipment.filter((e) => e.helpNeeded).map((e) => e.name));
 
   return (
     <Shell
@@ -67,11 +60,7 @@ function MissionsPage() {
       }
     >
       <div className="mb-5 flex items-center gap-3">
-        <Switch
-          id="archived-missions"
-          checked={showArchived}
-          onCheckedChange={setShowArchived}
-        />
+        <Switch id="archived-missions" checked={showArchived} onCheckedChange={setShowArchived} />
         <Label htmlFor="archived-missions">Show archived</Label>
       </div>
 
@@ -84,15 +73,10 @@ function MissionsPage() {
           {missions.map((mission) => {
             const needsHelp = mission.equipment.some((e) => helpNames.has(e));
             return (
-              <li
-                key={mission.id}
-                className="rounded-2xl border border-border bg-card p-4"
-              >
+              <li key={mission.id} className="rounded-2xl border border-border bg-card p-4">
                 <h2 className="text-xl">{mission.name || "Untitled"}</h2>
                 {mission.notes ? (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {mission.notes}
-                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{mission.notes}</p>
                 ) : null}
                 {needsHelp ? (
                   <p className="mt-2 rounded-lg border border-attention-border bg-attention/50 px-3 py-2 text-sm text-attention-foreground">
@@ -139,9 +123,7 @@ function MissionsPage() {
                   <Button
                     variant="ghost"
                     className="h-11"
-                    onClick={() =>
-                      saveMission({ ...mission, archived: !mission.archived })
-                    }
+                    onClick={() => saveMission({ ...mission, archived: !mission.archived })}
                   >
                     {mission.archived ? "Unarchive" : "Archive"}
                   </Button>
@@ -238,16 +220,8 @@ function MissionEditor({
             steps={draft.setup}
             onChange={(setup) => set({ setup })}
           />
-          <StepEditor
-            label="Prep"
-            steps={draft.prep}
-            onChange={(prep) => set({ prep })}
-          />
-          <StepEditor
-            label="Finish"
-            steps={draft.finish}
-            onChange={(finish) => set({ finish })}
-          />
+          <StepEditor label="Prep" steps={draft.prep} onChange={(prep) => set({ prep })} />
+          <StepEditor label="Finish" steps={draft.finish} onChange={(finish) => set({ finish })} />
         </div>
         <DialogFooter>
           <Button variant="ghost" className="h-12" onClick={onClose}>
