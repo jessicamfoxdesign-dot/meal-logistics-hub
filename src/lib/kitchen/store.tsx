@@ -1,5 +1,7 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
+  chooseListEntry,
+  type ListChoice,
   completeChore,
   planListItem as planListItemPure,
   toggleListEntry as toggleListEntryPure,
@@ -362,8 +364,20 @@ export function useSyncState() {
 }
 
 export function useToday() {
-  // Client-only render (behind the sign-in gate), so reading the date is safe.
-  return dayKey(new Date());
+  const [today, setToday] = useState(() => dayKey(new Date()));
+  useEffect(() => {
+    const refresh = () => setToday(dayKey(new Date()));
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    refresh();
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+  return today;
 }
 
 export const uid = () =>
@@ -716,6 +730,16 @@ export const planListItemOnDay = (kind: "todo" | "chore", refId: string, date: s
 
 export const toggleListEntryDone = (entryId: string) =>
   update((d) => toggleListEntryPure(d, entryId, dayKey(new Date())));
+
+export function choosePlannedSession(entryId: string, choice: ListChoice) {
+  let undo: (current: KitchenData) => KitchenData = (current) => current;
+  update((d) => {
+    const result = chooseListEntry(d, entryId, choice, dayKey(new Date()));
+    undo = result.undo;
+    return result.data;
+  });
+  return () => update(undo);
+}
 
 /** Done from the Chores page; returns an undo function. */
 export const markChoreDone = (choreId: string) => {
