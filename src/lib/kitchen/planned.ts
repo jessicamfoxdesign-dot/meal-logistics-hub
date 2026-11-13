@@ -14,11 +14,58 @@ const newId = () =>
  * chores keep per-session completion on the entry.
  */
 export function listEntryDone(d: KitchenData, e: PlanEntry): boolean {
+  if (e.skipped) return false;
   if (e.kind === "todo") {
     const t = d.todos.find((x) => x.id === e.refId);
     if (t && !t.repeatable) return t.done;
   }
   return !!e.done;
+}
+
+/** All unresolved earlier selections, without changing their planned dates. */
+export function earlierListEntries(d: KitchenData, today: string) {
+  return listEntriesForToday(d, today)
+    .filter((e) => e.date < today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export type ListChoice = { kind: "done" } | { kind: "skip" } | { kind: "move"; date: string };
+
+/** Apply a choice to one occurrence; Undo never restores a whole dataset. */
+export function chooseListEntry(d: KitchenData, id: string, choice: ListChoice, today: string) {
+  const before = d.entries.find((e) => e.id === id);
+  if (!before || !isListEntry(before)) return { data: d, undo: (current: KitchenData) => current };
+  const next =
+    choice.kind === "done"
+      ? toggleListEntry(d, id, today)
+      : {
+          ...d,
+          entries: d.entries.map((e) =>
+            e === before
+              ? choice.kind === "skip"
+                ? { ...e, skipped: true }
+                : { ...e, date: choice.date, skipped: false }
+              : e,
+          ),
+        };
+  const after = next.entries.find((e) => e.id === id);
+  const todoAfter = next.todos.find((t) => t.id === before.refId);
+  return {
+    data: next,
+    undo: (current: KitchenData): KitchenData => {
+      if (current.entries.find((e) => e.id === id) !== after) return current;
+      if (choice.kind === "done") {
+        if (
+          before.kind === "todo" &&
+          !todoAfter?.repeatable &&
+          current.todos.find((t) => t.id === before.refId) !== todoAfter
+        )
+          return current;
+        return toggleListEntry(current, id, today);
+      }
+      return { ...current, entries: current.entries.map((e) => (e.id === id ? before : e)) };
+    },
+  };
 }
 
 /** Sessions to show on Today: dated today, or earlier and still unfinished. */
@@ -49,7 +96,7 @@ export function planListItem(
       ? d.todos.find((t) => t.id === refId)?.text
       : d.chores.find((c) => c.id === refId)?.name;
   if (title === undefined) return { data: d, entryId: null };
-  const mine = d.entries.filter((e) => e.kind === kind && e.refId === refId);
+  const mine = d.entries.filter((e) => e.kind === kind && e.refId === refId && !e.skipped);
   const sameDay = mine.find((e) => e.date === date && !listEntryDone(d, e));
   if (sameDay) return { data: d, entryId: sameDay.id };
   const oneOff = kind === "todo" && !d.todos.find((t) => t.id === refId)?.repeatable;
@@ -77,7 +124,7 @@ export function planListItem(
 /** Check or uncheck a planned session, updating its source item. */
 export function toggleListEntry(d: KitchenData, entryId: string, today: string): KitchenData {
   const e = d.entries.find((x) => x.id === entryId);
-  if (!e || !isListEntry(e)) return d;
+  if (!e || !isListEntry(e) || e.skipped) return d;
   const done = !listEntryDone(d, e);
   if (e.kind === "todo") {
     const t = d.todos.find((x) => x.id === e.refId);
@@ -112,7 +159,12 @@ export function toggleListEntry(d: KitchenData, entryId: string, today: string):
 function canRollBack(d: KitchenData, e: PlanEntry, current: string | undefined) {
   if (!e.choreLastDoneSet || e.choreLastDoneSet !== current) return false;
   return !d.entries.some(
-    (x) => x !== e && x.kind === "chore" && x.refId === e.refId && x.done && x.choreLastDoneSet === current,
+    (x) =>
+      x !== e &&
+      x.kind === "chore" &&
+      x.refId === e.refId &&
+      x.done &&
+      x.choreLastDoneSet === current,
   );
 }
 
@@ -130,14 +182,26 @@ export function completeChore(
   if (!c) return { data: d, sessionIds: [] };
   const sessionIds: string[] = [];
   const entries = d.entries.map((x) => {
-    if (x.kind !== "chore" || x.refId !== choreId || x.done || x.skipped || x.date > today) return x;
+    if (x.kind !== "chore" || x.refId !== choreId || x.done || x.skipped || x.date > today)
+      return x;
     sessionIds.push(x.id);
     return { ...x, done: true, choreLastDoneBefore: c.lastDone ?? null, choreLastDoneSet: today };
   });
+  // A separate Done on the same date is still a newer actual completion.
+  // Earlier sessions must no longer be able to undo that completion.
+  const protectedEntries = entries.map((x) =>
+    x.kind === "chore" &&
+    x.refId === choreId &&
+    x.done &&
+    x.choreLastDoneSet === today &&
+    !sessionIds.includes(x.id)
+      ? { ...x, choreLastDoneSet: undefined }
+      : x,
+  );
   return {
     data: {
       ...d,
-      entries,
+      entries: protectedEntries,
       chores: d.chores.map((x) => (x === c ? { ...x, lastDone: today } : x)),
     },
     sessionIds,

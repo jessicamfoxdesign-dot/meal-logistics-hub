@@ -29,6 +29,8 @@ const CHORE_PHASES: ChorePhase[] = ["setup", "prep", "do", "finish"];
 export const Route = createFileRoute("/chores")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Chores — Kitchen Plan" },
       {
         name: "description",
@@ -283,9 +285,7 @@ function ChoreRow({
                       steps.map((s, j) => {
                         if (j !== i) return s;
                         const { constraint: _c, ...rest } = s;
-                        return e.target.value
-                          ? { ...rest, constraint: e.target.value }
-                          : rest;
+                        return e.target.value ? { ...rest, constraint: e.target.value } : rest;
                       }),
                     )
                   }
@@ -351,7 +351,8 @@ function ChoreRow({
               <li key={s.id}>
                 · {s.text}
                 <span className="text-xs">
-                  {" "}({CHORE_PHASE_LABEL[s.phase ?? "do"]}
+                  {" "}
+                  ({CHORE_PHASE_LABEL[s.phase ?? "do"]}
                   {s.constraint ? ` — ${s.constraint}` : ""})
                 </span>
               </li>

@@ -11,6 +11,8 @@ import { addTodo, clearCompletedTodos, uid, useKitchen } from "@/lib/kitchen/sto
 export const Route = createFileRoute("/todo")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "To-do — Kitchen Plan" },
       { name: "description", content: "A plain to-do list. Add it, check it off, done." },
       { property: "og:title", content: "To-do — Kitchen Plan" },

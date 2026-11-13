@@ -22,6 +22,8 @@ import type { Meal } from "@/lib/kitchen/types";
 export const Route = createFileRoute("/meals")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Meals — Kitchen Plan" },
       {
         name: "description",
@@ -57,11 +59,7 @@ function MealsPage() {
       }
     >
       <div className="mb-5 flex items-center gap-3">
-        <Switch
-          id="archived"
-          checked={showArchived}
-          onCheckedChange={setShowArchived}
-        />
+        <Switch id="archived" checked={showArchived} onCheckedChange={setShowArchived} />
         <Label htmlFor="archived">Show archived</Label>
       </div>
 
@@ -72,10 +70,7 @@ function MealsPage() {
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {meals.map((meal) => (
-            <li
-              key={meal.id}
-              className="rounded-2xl border border-border bg-card p-4"
-            >
+            <li key={meal.id} className="rounded-2xl border border-border bg-card p-4">
               <h2 className="text-xl">{meal.name || "Untitled"}</h2>
               {meal.notes ? (
                 <p className="mt-1 text-sm text-muted-foreground">{meal.notes}</p>
@@ -170,9 +165,7 @@ function MealEditor({
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-left">
-            {meal.name ? "Edit meal" : "New meal"}
-          </DialogTitle>
+          <DialogTitle className="text-left">{meal.name ? "Edit meal" : "New meal"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-5">
           <div className="space-y-2">
@@ -217,11 +210,7 @@ function MealEditor({
             steps={draft.prep}
             onChange={(prep) => set({ prep })}
           />
-          <StepEditor
-            label="Cook / finish"
-            steps={draft.cook}
-            onChange={(cook) => set({ cook })}
-          />
+          <StepEditor label="Cook / finish" steps={draft.cook} onChange={(cook) => set({ cook })} />
 
           <div className="space-y-2">
             <Label htmlFor="planb">Plan B</Label>

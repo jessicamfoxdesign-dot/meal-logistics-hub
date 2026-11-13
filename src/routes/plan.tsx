@@ -6,9 +6,9 @@ import { Shell } from "@/components/kitchen/Shell";
 import { EntryDialog } from "@/components/kitchen/EntryDialog";
 import { AddToDayDialog } from "@/components/kitchen/AddToDayDialog";
 import { DateNotes } from "@/components/kitchen/DateNotes";
+import { PlannedSessionActions } from "@/components/kitchen/PlannedSessionActions";
 import { EmptyNote, needsAttention } from "@/components/kitchen/bits";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { isListEntry, listEntryDone } from "@/lib/kitchen/planned";
 import {
   addDays,
@@ -16,7 +16,6 @@ import {
   deleteEntry,
   patchEntry,
   saveEntry,
-  toggleListEntryDone,
   useKitchen,
   useToday,
 } from "@/lib/kitchen/store";
@@ -27,16 +26,14 @@ export const Route = createFileRoute("/plan")({
       { title: "Plan — Kitchen Plan" },
       {
         name: "description",
-        content:
-          "A seven-day dinner plan you can rearrange without losing any preparation.",
+        content: "A seven-day dinner plan you can rearrange without losing any preparation.",
       },
       { property: "og:title", content: "Plan — Kitchen Plan" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
-        content:
-          "A seven-day dinner plan you can rearrange without losing any preparation.",
+        content: "A seven-day dinner plan you can rearrange without losing any preparation.",
       },
     ],
   }),
@@ -91,9 +88,7 @@ function PlanPage() {
               <section
                 key={day}
                 className={`rounded-2xl border p-4 ${
-                  day === today
-                    ? "border-primary/40 bg-card shadow-sm"
-                    : "border-border bg-card/60"
+                  day === today ? "border-primary/40 bg-card shadow-sm" : "border-border bg-card/60"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -111,8 +106,8 @@ function PlanPage() {
 
                 <ul className="mt-3 space-y-2">
                   {entries.map((entry) => {
-                    const open = entry.items.filter((i) =>
-                      !i.setAside && needsAttention(i.status),
+                    const open = entry.items.filter(
+                      (i) => !i.setAside && needsAttention(i.status),
                     ).length;
                     const listItem = isListEntry(entry);
                     const listDone = listItem && listEntryDone(data, entry);
@@ -127,36 +122,31 @@ function PlanPage() {
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div className="flex items-start gap-3">
-                            {listItem ? (
-                              <Checkbox
-                                checked={listDone}
-                                onCheckedChange={() => toggleListEntryDone(entry.id)}
-                                className="mt-0.5 size-6"
-                                aria-label={`Done: ${entry.title}`}
-                              />
-                            ) : null}
                             <div>
-                            <p
-                              className={`font-medium ${
-                                entry.skipped || listDone ? "text-muted-foreground" : ""
-                              } ${listDone ? "line-through" : ""}`}
-                            >
-                              {entry.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.kind === "mission"
-                                ? "Mission"
-                                : entry.kind === "todo"
-                                  ? "To-do"
-                                  : entry.kind === "chore"
-                                    ? "Chore"
-                                    : "Dinner"}
-                              {entry.skipped ? " · not today" : ""}
-                              {open > 0 ? ` · ${open} to sort out` : ""}
-                            </p>
+                              <p
+                                className={`font-medium ${
+                                  entry.skipped || listDone ? "text-muted-foreground" : ""
+                                } ${listDone ? "line-through" : ""}`}
+                              >
+                                {entry.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {entry.kind === "mission"
+                                  ? "Mission"
+                                  : entry.kind === "todo"
+                                    ? "To-do"
+                                    : entry.kind === "chore"
+                                      ? "Chore"
+                                      : "Dinner"}
+                                {entry.skipped ? (listItem ? " · Skipped" : " · not today") : ""}
+                                {open > 0 ? ` · ${open} to sort out` : ""}
+                              </p>
                             </div>
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex flex-wrap gap-1">
+                            {listItem ? (
+                              <PlannedSessionActions entry={entry} done={listDone} />
+                            ) : null}
                             <Button
                               variant="outline"
                               size="icon"
@@ -217,11 +207,7 @@ function PlanPage() {
                   })}
                 </ul>
 
-                <Button
-                  variant="ghost"
-                  className="mt-3 h-11 w-full"
-                  onClick={() => setAddDay(day)}
-                >
+                <Button variant="ghost" className="mt-3 h-11 w-full" onClick={() => setAddDay(day)}>
                   <Plus className="size-4" /> Add to this day
                 </Button>
               </section>

@@ -18,3 +18,4 @@
 - Chores are a staleness list (lastDone only, manual order as tiebreak), never a schedule — no due/overdue concepts by design.
 - Date notes are independent JSONB rows in date_notes using the shared store queue and allowlist RLS; filtering by their date never changes meal/task scheduling.
 - Planned To-do/Chore sessions are PlanEntry rows (kind "todo"/"chore", refId = source); rules live in src/lib/kitchen/planned.ts — one-off completion reads the To-do item, repeatable/chore completion lives on the entry, so state is never duplicated.
+- Planned-session choices reuse date/skipped/completion fields and field-scoped Undo in planned.ts; Today reviews earlier unresolved entries separately, so dismissal cannot alter scheduling and skipped occurrences cannot be reused by selection.
