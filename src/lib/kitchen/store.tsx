@@ -751,5 +751,11 @@ export const markChoreDone = (choreId: string) => {
     sessionIds = r.sessionIds;
     return r.data;
   });
-  return () => update((d) => undoCompleteChore(d, choreId, prev, sessionIds, today));
+  const completedChore = data.chores.find((c) => c.id === choreId);
+  return () => update((d) => undoCompleteChore(
+    d, choreId,
+    d.chores.find((c) => c.id === choreId) === completedChore
+      ? prev : d.chores.find((c) => c.id === choreId)?.lastDone,
+    sessionIds, today,
+  ));
 };

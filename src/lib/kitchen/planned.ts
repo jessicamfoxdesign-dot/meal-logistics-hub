@@ -29,7 +29,7 @@ export function earlierListEntries(d: KitchenData, today: string) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export type ListChoice = { kind: "done" | "skip" } | { kind: "move"; date: string };
+export type ListChoice = { kind: "done" } | { kind: "skip" } | { kind: "move"; date: string };
 
 /** Apply a choice to one occurrence; Undo never restores a whole dataset. */
 export function chooseListEntry(d: KitchenData, id: string, choice: ListChoice, today: string) {
