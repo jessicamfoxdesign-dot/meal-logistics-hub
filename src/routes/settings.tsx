@@ -33,6 +33,8 @@ import type { KitchenData } from "@/lib/kitchen/types";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Settings & backup — Kitchen Plan" },
       {
         name: "description",

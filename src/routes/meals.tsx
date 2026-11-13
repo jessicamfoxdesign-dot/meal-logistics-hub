@@ -22,6 +22,8 @@ import type { Meal } from "@/lib/kitchen/types";
 export const Route = createFileRoute("/meals")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Meals — Kitchen Plan" },
       {
         name: "description",

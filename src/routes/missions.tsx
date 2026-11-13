@@ -27,6 +27,8 @@ import type { Mission } from "@/lib/kitchen/types";
 export const Route = createFileRoute("/missions")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Missions — Kitchen Plan" },
       {
         name: "description",

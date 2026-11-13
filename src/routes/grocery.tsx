@@ -32,6 +32,8 @@ import type { GroceryCategory, GroceryItem } from "@/lib/kitchen/types";
 export const Route = createFileRoute("/grocery")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Grocery List — Kitchen Plan" },
       {
         name: "description",

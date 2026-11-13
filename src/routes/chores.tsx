@@ -29,6 +29,8 @@ const CHORE_PHASES: ChorePhase[] = ["setup", "prep", "do", "finish"];
 export const Route = createFileRoute("/chores")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Chores — Kitchen Plan" },
       {
         name: "description",
